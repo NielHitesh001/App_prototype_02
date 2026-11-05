@@ -13,25 +13,21 @@ import {
 
 /**
  * Generates a unique, non-colliding reference string (P0-8).
- * Uses a cryptographically secure random UUID suffix (8 hex characters)
- * and verifies uniqueness against any existing wallet ledger entries.
+ * Tries up to 5 times with 'TR-' plus the first 12 hex characters of crypto.randomUUID().
+ * Throws if all 5 attempts collide. Never returns a duplicate.
  */
 export function generateReference(wallet?: Wallet): string {
-  const makeRef = () => `TR-${crypto.randomUUID().replace(/-/g, '').slice(-8).toUpperCase()}`;
+  const existingRefs = new Set(wallet?.entries.map(e => e.reference) ?? []);
 
-  let ref = makeRef();
-  if (wallet) {
-    let attempts = 0;
-    while (wallet.entries.some(e => e.reference === ref)) {
-      ref = makeRef();
-      attempts++;
-      if (attempts > 50) {
-        ref = `TR-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(-4).toUpperCase()}`;
-        break;
-      }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const hex = crypto.randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase();
+    const candidate = `TR-${hex}`;
+    if (!existingRefs.has(candidate)) {
+      return candidate;
     }
   }
-  return ref;
+
+  throw new Error('Could not generate a unique transaction reference');
 }
 
 /**
@@ -313,10 +309,11 @@ export function processRefund(
     createdAt: new Date().toISOString(),
     label: `Refund: ${original.label}`,
     labelEl: `Επιστροφή: ${original.label}`,
-    reference: `${original.reference}-REFUND`,
+    reference: generateReference(wallet),
     paymentMode: 'wallet' as const,
     meta: {
       originalEntryId: original.id,
+      originalReference: original.reference,
       reason: options?.reason,
       remainingAfterThisRefundCents: remainingRefundableCents - amountToRefundCents
     }
@@ -358,7 +355,6 @@ export function canBook(
       allowed: false,
       reason: 'guests_out_of_range',
       shortfallCents: 0,
-      shortfall: 0,
       messageEn: 'Guests must be between 1 and 4 guests.',
       messageEl: 'Ο αριθμός επισκεπτών πρέπει να είναι μεταξύ 1 και 4.'
     };
@@ -368,8 +364,7 @@ export function canBook(
   if (paymentMethod !== 'wallet') {
     return {
       allowed: true,
-      shortfallCents: 0,
-      shortfall: 0
+      shortfallCents: 0
     };
   }
 
@@ -377,8 +372,7 @@ export function canBook(
   if (totalCents <= balanceCents) {
     return {
       allowed: true,
-      shortfallCents: 0,
-      shortfall: 0
+      shortfallCents: 0
     };
   }
 
@@ -392,7 +386,6 @@ export function canBook(
     allowed: false,
     reason: 'insufficient_balance',
     shortfallCents,
-    shortfall: shortfallCents,
     messageEn,
     messageEl
   };

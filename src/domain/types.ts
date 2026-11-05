@@ -67,7 +67,6 @@ export type BookingGuardResult = {
   allowed: boolean;
   reason?: BookingGuardReason;
   shortfallCents: number;
-  shortfall?: number;
   messageEn?: string;
   messageEl?: string;
 };

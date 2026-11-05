@@ -35,14 +35,14 @@ describe('2. Money Handling & Rounding', () => {
   it('test 1: rounding — percentage that lands on half a cent rounds according to documented rule (Round-Half-Up)', () => {
     // €2.55 = 255 cents. 10% of 255 = 25.5 cents.
     // Documented rule: commercial round half up -> Math.round(25.5) = 26 cents (€0.26).
-    const bonusHalfCent = calculateBonusCents(255, 0.1);
+    const bonusHalfCent = calculateBonusCents(255, 10);
     expect(bonusHalfCent).toBe(26);
 
     // €2.45 = 245 cents. 10% of 245 = 24.5 cents -> 25 cents.
-    expect(calculateBonusCents(245, 0.1)).toBe(25);
+    expect(calculateBonusCents(245, 10)).toBe(25);
 
     // €1.04 = 104 cents. 10% of 104 = 10.4 cents -> 10 cents.
-    expect(calculateBonusCents(104, 0.1)).toBe(10);
+    expect(calculateBonusCents(104, 10)).toBe(10);
   });
 
   it('test 3: negative and zero amounts are rejected for top-ups, debits, and conversions', () => {

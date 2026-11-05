@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Wallet } from '../domain/types';
 import {
   calculateBonusCents,
@@ -313,7 +313,6 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     const result = canBook(2000, 2400, { guests: 2 });
     expect(result.allowed).toBe(false);
     expect(result.shortfallCents).toBe(400);
-    expect(result.shortfall).toBe(400);
   });
 
   it('P1-5: canBook requires guests and validates 1-4 bounds', () => {
@@ -321,5 +320,84 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     expect(canBook(5000, 2000, { guests: 4 }).allowed).toBe(true);
     expect(canBook(5000, 2000, { guests: 0 }).allowed).toBe(false);
     expect(canBook(5000, 2000, { guests: 5 }).allowed).toBe(false);
+  });
+
+  // Fix E: Required new tests
+  it('E1: Partial refunds get distinct references and originalReference in meta', () => {
+    const initialWallet: Wallet = { balanceCents: 5000, entries: [] };
+    const bookedWallet = debit(initialWallet, {
+      id: 'booking-distinct-ref',
+      kind: 'booking',
+      amountCents: -2000, // €20.00
+      createdAt: new Date().toISOString(),
+      label: 'Dinner',
+      reference: 'TR-ORIG-BOOKING'
+    });
+
+    const refund1 = processRefund(bookedWallet, 'booking-distinct-ref', 1200);
+    const refund2 = processRefund(refund1, 'booking-distinct-ref', 800);
+
+    const refundEntry1 = refund2.entries.find(e => e.amountCents === 1200);
+    const refundEntry2 = refund2.entries.find(e => e.amountCents === 800);
+
+    expect(refundEntry1).toBeDefined();
+    expect(refundEntry2).toBeDefined();
+    expect(refundEntry1?.reference).not.toBe(refundEntry2?.reference);
+    expect(refundEntry1?.meta?.originalReference).toBe('TR-ORIG-BOOKING');
+    expect(refundEntry2?.meta?.originalReference).toBe('TR-ORIG-BOOKING');
+  });
+
+  it('E2: Reference generation throws when all attempts collide', () => {
+    const fixedUuid = '01234567-89ab-cdef-0123-456789abcdef';
+    const currentRef = 'TR-89ABCDEF';
+    const newRef = 'TR-0123456789AB';
+    const walletWithExistingRef: Wallet = {
+      balanceCents: 0,
+      entries: [
+        {
+          id: 'existing-1',
+          kind: 'topup',
+          amountCents: 1000,
+          resultingBalanceCents: 1000,
+          createdAt: new Date().toISOString(),
+          label: 'Existing',
+          reference: currentRef
+        },
+        {
+          id: 'existing-2',
+          kind: 'topup',
+          amountCents: 1000,
+          resultingBalanceCents: 1000,
+          createdAt: new Date().toISOString(),
+          label: 'Existing',
+          reference: newRef
+        }
+      ]
+    };
+
+    const spy = vi.spyOn(crypto, 'randomUUID').mockReturnValue(fixedUuid as `${string}-${string}-${string}-${string}-${string}`);
+    try {
+      expect(() => generateReference(walletWithExistingRef)).toThrow(/unique transaction reference/);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('E3: 1% bonus is 1%', () => {
+    expect(calculateBonusCents(10000, 1)).toBe(100);
+  });
+
+  it('E4: 10% bonus rounds half up', () => {
+    expect(calculateBonusCents(255, 10)).toBe(26);
+  });
+
+  it('E5: Decimal rate is rejected', () => {
+    expect(() => calculateBonusCents(10000, 0.1)).toThrow();
+  });
+
+  it('E6: Shortfall field is cents only', () => {
+    const res = canBook(2000, 2400, { guests: 2 });
+    expect(res.shortfallCents).toBe(400);
+    expect('shortfall' in res).toBe(false);
   });
 });

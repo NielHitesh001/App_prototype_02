@@ -112,9 +112,13 @@ export function validateAndParseInputToCents(
  * - 2500 cents (€25.00) with 10% -> 250 cents (€2.50).
  */
 export function calculateBonusCents(topupCents: number, ratePercent = 10): number {
-  if (topupCents <= 0) return 0;
-  const rate = ratePercent > 0 && ratePercent <= 1 ? Math.round(ratePercent * 100) : ratePercent;
-  return Math.round((topupCents * rate) / 100);
+  if (!Number.isInteger(topupCents) || topupCents <= 0) {
+    return 0;
+  }
+  if (!Number.isInteger(ratePercent) || ratePercent < 0 || ratePercent > 100) {
+    throw new Error(`ratePercent must be an integer between 0 and 100, received: ${ratePercent}`);
+  }
+  return Math.round((topupCents * ratePercent) / 100);
 }
 
 /**
