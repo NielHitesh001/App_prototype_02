@@ -1,14 +1,15 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { CartItem, LedgerEntry, MenuItem, TableBooking, Wallet } from '../domain/types';
+import type { CartItem, MenuItem, TableBooking, Wallet } from '../domain/types';
 import { initialTableBookings, initialWallet } from '../fixtures/data';
-import { credit, debit } from '../lib/wallet';
+import { centsToEuro, euroToCents } from '../lib/money';
+import { debit, generateReference, processTopupWithBonus } from '../lib/wallet';
 
 type StoreContextType = {
   wallet: Wallet;
   saved: Set<string>;
   toggleSaved: (id: string) => void;
-  addDebit: (amount: number, label: string) => void;
-  addTopup: (amount: number) => void;
+  addDebit: (amountEur: number, label: string, idempotencyKey?: string) => Wallet;
+  addTopup: (amountEur: number, idempotencyKey?: string) => void;
   tableBookings: TableBooking[];
   addTableBooking: (booking: Omit<TableBooking, 'id' | 'status'>) => void;
   cart: CartItem[];
@@ -19,21 +20,6 @@ type StoreContextType = {
 };
 
 const Ctx = createContext<StoreContextType | null>(null);
-
-const createEntry = (
-  kind: LedgerEntry['kind'],
-  amountCredits: number,
-  label: string,
-  bonusCredits?: number
-): LedgerEntry => ({
-  id: crypto.randomUUID(),
-  kind,
-  amountCredits,
-  label,
-  createdAt: new Date().toISOString(),
-  reference: `TR-${Math.floor(1000 + Math.random() * 9000)}`,
-  bonusCredits
-});
 
 export function AppStore({ children }: { children: ReactNode }) {
   const [wallet, setWallet] = useState<Wallet>(initialWallet);
@@ -50,17 +36,32 @@ export function AppStore({ children }: { children: ReactNode }) {
     });
   };
 
-  const addDebit = (amount: number, label: string) => {
-    const entry = createEntry('booking', -amount, label);
-    setWallet(w => debit(w, entry));
+  const addDebit = (amountEur: number, label: string, idempotencyKey?: string): Wallet => {
+    const amountCents = euroToCents(amountEur);
+    const updated = debit(wallet, {
+      id: crypto.randomUUID(),
+      idempotencyKey: idempotencyKey || `debit-${Date.now()}`,
+      kind: 'booking',
+      amountCents: -amountCents,
+      label,
+      labelEl: label,
+      createdAt: new Date().toISOString(),
+      reference: generateReference(),
+      paymentMode: 'wallet'
+    });
+    setWallet(updated);
+    return updated;
   };
 
-  const addTopup = (amount: number) => {
-    // 10% credit bonus rule as confirmed in DECISIONS.md
-    const bonus = Math.round(amount * 0.1 * 100) / 100;
-    const totalCredits = amount + bonus;
-    const entry = createEntry('topup', totalCredits, 'Wallet top-up (10% bonus applied)', bonus);
-    setWallet(w => credit(w, entry));
+  const addTopup = (amountEur: number, idempotencyKey?: string) => {
+    const amountCents = euroToCents(amountEur);
+    const key = idempotencyKey || `topup-${Date.now()}`;
+    const result = processTopupWithBonus(wallet, amountCents, {
+      idempotencyKey: key,
+      label: 'Wallet top-up',
+      labelEl: 'Φόρτιση πορτοφολιού'
+    });
+    setWallet(result.wallet);
   };
 
   const addTableBooking = (booking: Omit<TableBooking, 'id' | 'status'>) => {
@@ -101,13 +102,14 @@ export function AppStore({ children }: { children: ReactNode }) {
   const checkoutCart = (method: 'wallet' | 'card') => {
     const subtotal = cart.reduce((sum, c) => sum + c.item.priceEur * c.quantity, 0);
     const deliveryFee = cart.length > 0 ? Math.max(...cart.map(c => c.item.deliveryFeeEur)) : 0;
-    const total = subtotal + deliveryFee;
+    const totalEur = subtotal + deliveryFee;
+    const totalCents = euroToCents(totalEur);
 
     if (method === 'wallet') {
-      if (wallet.balanceCredits < total) {
-        return { success: false, shortfall: total - wallet.balanceCredits };
+      if (wallet.balanceCents < totalCents) {
+        return { success: false, shortfall: centsToEuro(totalCents - wallet.balanceCents) };
       }
-      addDebit(total, `Kouzina delivery order (${cart.length} items)`);
+      addDebit(totalEur, `Kouzina delivery order (${cart.length} items)`);
     }
     clearCart();
     return { success: true };

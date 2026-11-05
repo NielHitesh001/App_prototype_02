@@ -39,19 +39,39 @@ export type Deal = {
   discountNote?: string;
 };
 
+export type LedgerEntryKind = 'topup' | 'bonus' | 'booking' | 'refund';
+
 export type LedgerEntry = {
   id: string;
-  kind: 'topup' | 'booking' | 'refund';
-  amountCredits: number;
-  createdAt: string;
+  idempotencyKey?: string;
+  kind: LedgerEntryKind;
+  amountCents: number; // positive for topup/bonus/refund, negative for debit
+  amountCredits: number; // euro/credits representation for backwards-compatibility (amountCents / 100)
+  resultingBalanceCents: number;
+  createdAt: string; // ISO 8601
   label: string;
+  labelEl?: string; // Greek label for bilingual receipts
   reference: string;
+  paymentMode?: 'wallet' | 'card' | 'qr';
+  meta?: Record<string, unknown>;
   bonusCredits?: number;
 };
 
 export type Wallet = {
-  balanceCredits: number;
+  balanceCents: number; // Integer cents (primary truth)
+  balanceCredits: number; // balanceCents / 100
   entries: LedgerEntry[];
+};
+
+export type BookingGuardReason = 'insufficient_balance' | 'guests_out_of_range' | 'invalid_amount';
+
+export type BookingGuardResult = {
+  allowed: boolean;
+  reason?: BookingGuardReason;
+  shortfallCents: number;
+  shortfall: number; // in euro/credits for backwards compatibility
+  messageEn?: string;
+  messageEl?: string;
 };
 
 export type TableBooking = {

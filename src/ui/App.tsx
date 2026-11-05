@@ -1118,6 +1118,9 @@ function Receipt() {
           <article className="receipt card">
             <p className="eyebrow">Reference: {entry.reference}</p>
             <h2>{entry.label}</h2>
+            {entry.labelEl && (
+              <p className="text-xs text-[#7a6a5a] m-0 mb-3 font-semibold">{entry.labelEl}</p>
+            )}
             <dl>
               <dt>Date & time</dt>
               <dd>{longDate(entry.createdAt)}</dd>
@@ -1129,17 +1132,23 @@ function Receipt() {
               </dd>
 
               <dt>Payment method</dt>
-              <dd>{entry.kind === 'booking' ? 'Wallet credits' : 'Card payment'}</dd>
+              <dd>
+                {entry.kind === 'booking'
+                  ? 'Wallet credits'
+                  : entry.kind === 'bonus'
+                    ? 'Promotional bonus'
+                    : 'Card payment'}
+              </dd>
 
-              {entry.bonusCredits !== undefined && entry.bonusCredits > 0 && (
+              {entry.resultingBalanceCents !== undefined && (
                 <>
-                  <dt>Bonus credits included</dt>
-                  <dd>+{euro(entry.bonusCredits)}</dd>
+                  <dt>Resulting balance</dt>
+                  <dd>{euro(entry.resultingBalanceCents / 100)}</dd>
                 </>
               )}
             </dl>
             <p className="text-xs text-[#7a6a5a] pt-3 border-t border-[#ebdcd3]">
-              Electronic transaction record issued by Troo Cyprus.
+              Electronic transaction record issued by Troo Cyprus · Έγκυρη ηλεκτρονική απόδειξη
             </p>
           </article>
         ) : (

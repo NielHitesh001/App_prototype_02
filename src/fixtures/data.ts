@@ -178,24 +178,32 @@ export const initialTableBookings: TableBooking[] = [
 ];
 
 export const initialWallet: Wallet = {
+  balanceCents: 13000,
   balanceCredits: 130,
   entries: [
     {
-      id: 'l1',
-      kind: 'topup',
-      amountCredits: 130,
-      createdAt: '2026-11-01T10:00:00+02:00',
-      label: 'Wallet top-up',
-      reference: 'TR-1001',
-      bonusCredits: 13
-    },
-    {
       id: 'l2',
       kind: 'booking',
+      amountCents: -1000,
       amountCredits: -10,
+      resultingBalanceCents: 13000,
       createdAt: '2026-11-03T19:00:00+02:00',
       label: 'Table booking deposit',
-      reference: 'TR-1002'
+      labelEl: 'Προκαταβολή κράτησης τραπεζιού',
+      reference: 'TR-1002',
+      paymentMode: 'wallet'
+    },
+    {
+      id: 'l1',
+      kind: 'topup',
+      amountCents: 14000,
+      amountCredits: 140,
+      resultingBalanceCents: 14000,
+      createdAt: '2026-11-01T10:00:00+02:00',
+      label: 'Wallet top-up',
+      labelEl: 'Φόρτιση πορτοφολιού',
+      reference: 'TR-1001',
+      paymentMode: 'card'
     }
   ]
 };
