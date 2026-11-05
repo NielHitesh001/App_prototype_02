@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+
+<html lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Kalihora - Cyprus Dining &amp; Delivery</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              charcoal: '#121214',
+              surface: '#1A1A1E',
+              elevated: '#242429',
+              red: '#E23744',
+              gold: '#F4B400',
+              goldDark: '#3A2E12',
+              accent: '#FF4D5A'
+            },
+            terracotta: {
+              DEFAULT: '#9d3d26',
+              dark: '#742714',
+              light: '#ffdad2'
+            },
+            olive: {
+              DEFAULT: '#556b2f',
+              dark: '#364c31',
+              light: '#d7e4c8'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Styles -->
+<style data-purpose="scroll-and-typography">
+    /* Hide scrollbars for slick mobile touch strips */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .text-shadow-hero {
+      text-shadow: 0px 3px 6px rgba(0, 0, 0, 0.45);
+    }
+    @keyframes emberGlow {
+      0%, 100% {
+        box-shadow: 0 0 8px rgba(254, 185, 86, 0.45), inset 0 0 4px rgba(254, 185, 86, 0.2);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 16px rgba(254, 185, 86, 0.75), inset 0 0 8px rgba(254, 185, 86, 0.4);
+        transform: scale(1.02);
+      }
+    }
+    .ember-glow {
+      animation: emberGlow 2.8s ease-in-out infinite;
+    }
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .heart-pop {
+      animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes nfcPulse {
+      0% { transform: scale(0.95); opacity: 0.9; }
+      50% { transform: scale(1.18); opacity: 0.35; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    .nfc-wave {
+      animation: nfcPulse 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .nfc-wave-delay {
+      animation: nfcPulse 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 0.6s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ember-glow, .heart-pop, .nfc-wave, .nfc-wave-delay {
+        animation: none !important;
+      }
+      * {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+</head>
+<body class="bg-[#fef9f0] text-[#1d1c16] font-['Plus_Jakarta_Sans',sans-serif] antialiased selection:bg-[#9d3d26] selection:text-white pb-24">
+<!-- Mobile Screen Container -->
+<div class="max-w-md mx-auto min-h-screen relative flex flex-col bg-[#fef9f0] shadow-xl border-x border-[#ede8df]" id="app-root">
+<!-- BEGIN: SearchAndFiltersHeader -->
+<header class="px-4 py-2.5 sticky top-0 bg-[#fef9f0]/95 backdrop-blur-md z-30 border-b border-[#ede8df] flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<button class="flex items-center gap-1.5 text-xs text-[#805200] font-medium cursor-pointer active:scale-95 transition-transform" onclick="showToast('Location set to Old Town, Limassol')" type="button">
+<span class="material-symbols-outlined text-[17px] text-[#9d3d26]">location_on</span>
+<span class="font-semibold text-[#1d1c16]">Old Town, Limassol</span>
+<span class="material-symbols-outlined text-[16px] text-[#8a726c]">expand_more</span>
+</button>
+<div class="flex items-center gap-2">
+<!-- Wallet credit balance button -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#faece4] border border-[#ecd2c4] text-[#9a4a3a] text-xs font-semibold shadow-xs hover:bg-[#f5e0d4] active:scale-95 transition cursor-pointer" id="wallet-btn" onclick="openWalletModal()" type="button">
+<span class="material-symbols-outlined text-[15px] text-[#9a4a3a]">account_balance_wallet</span>
+<span id="header-credits-text">€130 credits</span>
+</button>
+<button aria-label="Profile" class="w-8 h-8 rounded-full bg-[#ecd2c4] text-[#9a4a3a] flex items-center justify-center font-semibold text-xs border border-[#dfbead] shadow-xs active:scale-95 transition cursor-pointer" onclick="showToast('Profile: Elena Constantinou · Winter Pass Holder #KH-WP-9942')">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</button>
+</div>
+</div>
+<div class="bg-white rounded-2xl flex items-center px-3.5 py-2.5 border border-[#ddc0ba]/60 shadow-sm focus-within:border-[#9d3d26] transition-colors">
+<span class="material-symbols-outlined text-[#8a726c] mr-2.5 text-[20px]">search</span>
+<input autocomplete="off" class="bg-transparent text-sm w-full text-[#1d1c16] placeholder-[#8a726c] outline-none border-none p-0 focus:ring-0 font-normal" id="search-input" oninput="handleSearch(this.value)" placeholder="Search wood-fired kleftiko, meze, tavernas..." type="text"/>
+<button class="hidden text-[#8a726c] hover:text-[#1d1c16]" id="search-clear-btn" onclick="clearSearch()" type="button">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+</button>
+</div>
+</header>
+<!-- END: SearchAndFiltersHeader -->
+<main class="flex-1 px-4 space-y-4 pt-1">
+<!-- BEGIN: HeroPromoCarousel -->
+<section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#9d3d26] to-[#742714] text-white shadow-lg p-5 min-h-[195px] flex flex-col justify-between border border-[#bd553b]/40 transition-all duration-300" data-purpose="hero-carousel" id="hero-carousel-container">
+<div class="absolute -top-10 -right-10 w-36 h-36 bg-[#feb956]/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-start relative z-10 gap-3">
+<div class="max-w-[62%]">
+<div class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-black/30 backdrop-blur-sm rounded-full text-[#ffddb4] uppercase mb-1.5 ember-glow" id="promo-badge">
+<span class="material-symbols-outlined text-[13px] text-[#feb956]">local_fire_department</span>
+<span id="promo-tag-text">Cypriot Hearth</span>
+</div>
+<h2 class="text-2xl font-bold font-['Outfit',sans-serif] tracking-tight leading-tight text-white transition-opacity duration-200" id="promo-title">Winter Hearth Evenings</h2>
+<p class="text-xs text-[#ffdad2] mt-1 font-normal leading-snug transition-opacity duration-200" id="promo-desc">25% Off slow-cooked kleftiko &amp; village hearth meze.</p>
+</div>
+<div class="relative w-24 h-24 shrink-0 mt-0.5">
+<img alt="Authentic Cyprus Hearth Delicacy" class="w-full h-full object-cover rounded-2xl border-2 border-white/30 shadow-lg transition-transform duration-300" id="promo-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ8UqOGJwKGmNxtjrpGl5_hA6-82FdBDF7C86bGzRrh3BvkB4g4uO2Y5dezL21lxhUBocFcQ8LSLL4imbMHT0GtxAmijH_J3f95bt1-qggl6ym_E9dFLsFiCH2eRB37-dp50ZU7dXTB8EhOf1jEN48DAPC7q6Qq0Z8qVe6Vbmn7GlfdojPHpFTLFYBhDlBYYEzKkVubCGfZjA-RoRABcUrrU1CHB3-G4omfTtlue0"/>
+<span class="absolute -bottom-1 -left-1 bg-[#feb956] text-[#291800] text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5 ember-glow">
+<span class="material-symbols-outlined text-[11px]">local_fire_department</span> Hearth-Lit
+      </span>
+</div>
+</div>
+<div class="flex justify-between items-center mt-3 relative z-10">
+<button class="bg-white hover:bg-[#fef9f0] text-[#802913] text-xs font-bold py-2 px-4 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform cursor-pointer" onclick="openReservationModal('To Patriko Woodfire Tavern')">
+<span>Reserve or Order</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+<!-- Interactive carousel pagination dots -->
+<div class="flex items-center space-x-1.5 p-1 cursor-pointer">
+<button aria-label="Slide 1" class="w-4 h-1.5 rounded-full bg-white transition-all duration-300" id="dot-0" onclick="switchPromoSlide(0)" type="button"></button>
+<button aria-label="Slide 2" class="w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/80 transition-all duration-300" id="dot-1" onclick="switchPromoSlide(1)" type="button"></button>
+<button aria-label="Slide 3" class="w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/80 transition-all duration-300" id="dot-2" onclick="switchPromoSlide(2)" type="button"></button>
+</div>
+</div>
+</section>
+<!-- END: HeroPromoCarousel -->
+<!-- BEGIN: VipMembershipBanner -->
+<section class="bg-[#f8f3ea] border border-[#e7e2d9] rounded-2xl p-3 flex items-center space-x-3 shadow-sm" data-purpose="gold-membership-strip">
+<div class="w-9 h-9 rounded-xl bg-[#cce7c3] text-[#364c31] flex items-center justify-center shrink-0 shadow-xs">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</div>
+<div class="text-xs text-[#56423d] leading-snug flex-1">
+<span class="font-bold text-[#1d1c16]">Kalihora Pass</span> · Free delivery &amp; 0% fee table bookings with Winter Pass.
+    <button class="font-bold text-[#9d3d26] hover:underline inline-flex items-center ml-1 text-xs cursor-pointer" onclick="openWalletModal()" type="button">
+      Perks <span class="material-symbols-outlined text-[14px] ml-0.5">arrow_forward</span>
+</button>
+</div>
+</section>
+<!-- END: VipMembershipBanner -->
+<!-- BEGIN: CategoryStrip -->
+<section data-purpose="dish-categories">
+<div class="flex items-center space-x-4 overflow-x-auto no-scrollbar py-1 px-1" id="category-chips">
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="All" onclick="selectCategory('All')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border-2 border-[#9d3d26] flex items-center justify-center shadow-sm">
+<img alt="All" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_zM1xXky_kJJIdu1o7CqhEApM1fa-o6MSPEfN2sXk4jnEp7Mwreoo8XIWBHi1Ga9jXnB3l8pl46Epz3eNPTHxlNUCE8k0QLb4JGkFHzSv7KgaSTbMCupydpnCOBVDRSfNY4tkQrvMSk1lhJwhXz0StTER8iR0HI84NjSl17szMX0bP0XntBCHv3B688WUsYdqvf8OJcsqqd7_DvdLax9rbpSu_k_3ZABQ2F_xYoA"/>
+</div>
+<span class="cat-label text-xs font-bold text-[#9d3d26] mt-1.5">All</span>
+<span class="cat-bar w-5 h-0.5 bg-[#9d3d26] rounded-full mt-1"></span>
+</div>
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="Souvlaki" onclick="selectCategory('Souvlaki')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors">
+<img alt="Souvlaki" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq-yj3tn-rb02wPMf-r4vlwGO-evdE4mM_tgkQoAk4GTGOQQtVad1udr_VbIqMdXg0DLwGA_C9FahMa5KKDhl_gB6I2jtk1S45w4msAuZl-T4CvBDTZUmdf-7Uhi-tQQ4PQ1MdXBjpIPxINYNHzwcsM9KxRM1WAmSm2Jy2jaTuphi1gawi8CIMTceRIhHFRc6lTH0Y3TKHeq8TLESsFm5Du-dbXnSFW2JLB7Mjydw"/>
+</div>
+<span class="cat-label text-xs font-medium text-[#56423d] mt-1.5">Souvlaki</span>
+<span class="cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1"></span>
+</div>
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="Kleftiko" onclick="selectCategory('Kleftiko')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors">
+<img alt="Kleftiko" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9N6m_K39tvqaw3DXlmFmH8CwJVtZSjHLr5ImPKePNvzBRHat5HYh7pbA1DYlzWQ5-LfPXy3GebwFv7ShBEZwPFk2uBDRWoPcKzkbsuqYdDM7oC9G6N4uFC77sRNfTLcqdKbOcfNa7wZLJmUHowh9d7WiCfB2McdOpUoEOEHJ6zKHMfkGreZCNbfctfG2Bl2hf3xbW5SfljNsKvw6BrdmXSB1GPXhcAbPH_eoykvs"/>
+</div>
+<span class="cat-label text-xs font-medium text-[#56423d] mt-1.5">Kleftiko</span>
+<span class="cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1"></span>
+</div>
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="Meze" onclick="selectCategory('Meze')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors">
+<img alt="Meze" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbj82OGljGIGqiGfCoLZV2vtZ3EkWqZ_39Y-aLVQdydKKaqDKtOTvPyZkjIwpXbUwYs5thp8Hez2JV9zU9kOv3uOYMZs16R3SjgaawDwaM0KkxlPdxWA3mtplo4as5YpuRsCvkR8SadazBfXY5WDNU9X6velv8V8_vuMAHl1PNX4Pge9PpNTt1QTzcEZPUd9A2bjc1wHzH3vTUB9CBHwiLRDZaZLHn5m-4wwPYbt8"/>
+</div>
+<span class="cat-label text-xs font-medium text-[#56423d] mt-1.5">Meze</span>
+<span class="cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1"></span>
+</div>
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="Seafood" onclick="selectCategory('Seafood')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors">
+<img alt="Seafood" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIGplyQtHb4POWQv4_hfkXg86QAsI1545Mf3Z6T8Ho-3fcRZ_HshDYBFlQUN2_UXLFnYyy_Cm4SoPNvvy_gZW5phm06RiJQ0igjgPkih2vr0UTF2VrM1KG-1Y67-4-EWmJUA40DT71Orh8Po1RTDmnFgwv1jwDJR17p3UGVfBWrykzcT2HukfPHZzMGiwevly60Mo_rtzlVYz8ooyvkPKcvkvNGcZReTt5CxXJMQM"/>
+</div>
+<span class="cat-label text-xs font-medium text-[#56423d] mt-1.5">Seafood</span>
+<span class="cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1"></span>
+</div>
+<div class="category-item flex flex-col items-center shrink-0 cursor-pointer group active:scale-95 transition-transform" data-cat="Breads" onclick="selectCategory('Breads')">
+<div class="cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors">
+<img alt="Village Breads" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK_oum8-Xj1uwndILVVguaz8SyGut_WqSF1BvpNRAZYh_ydVhoN_RYIKpWCiC9zxZ9_BmKK7JGkc5zpD-h-cU6VeTJtNc6s2PdEHV-T-vMkQBSEmUzDn92zcmPR5m_WNCrvGfhEYppT6wblJxjzrw5NFntQdqGAr-hf3bxw9BFYYhFK7KTFTmFytdJFWg1It0dqNuerUhQtJBvTMeoWcGj4xgig7B3DAF62AjcmJo"/>
+</div>
+<span class="cat-label text-xs font-medium text-[#56423d] mt-1.5">Breads</span>
+<span class="cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1"></span>
+</div>
+</div>
+</section>
+<!-- END: CategoryStrip -->
+<!-- BEGIN: FilterPillsRow -->
+<section class="flex items-center space-x-2 overflow-x-auto no-scrollbar pt-1" data-purpose="horizontal-filters" id="filter-pills">
+<button class="filter-pill bg-[#9d3d26] text-white text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#9d3d26] flex items-center space-x-1.5 shrink-0 shadow-xs active:scale-95 transition" id="pill-hearth" onclick="toggleFilter('hearth')">
+<span>Hearth Lit</span>
+</button>
+<button class="filter-pill bg-white hover:bg-[#f8f3ea] text-[#1d1c16] text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#ddc0ba] shrink-0 shadow-xs active:scale-95 transition" id="pill-toprated" onclick="toggleFilter('toprated')">
+    Top Rated
+  </button>
+<button class="filter-pill bg-white hover:bg-[#f8f3ea] text-[#1d1c16] text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#ddc0ba] shrink-0 shadow-xs active:scale-95 transition" id="pill-nearme" onclick="toggleFilter('nearme')">
+    Near Me
+  </button>
+<button class="filter-pill bg-white hover:bg-[#f8f3ea] text-[#1d1c16] text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#ddc0ba] flex items-center space-x-1 shrink-0 shadow-xs active:scale-95 transition" id="pill-passperks" onclick="toggleFilter('passperks')">
+<span class="material-symbols-outlined text-[15px] text-[#4d6547]">eco</span>
+<span>Pass Perks</span>
+</button>
+</section>
+<!-- END: FilterPillsRow -->
+<!-- BEGIN: ExploreMoreSection -->
+<section class="pt-2" data-purpose="explore-shortcuts">
+<div class="flex items-center justify-between mb-2 px-1">
+<h3 class="text-[11px] font-bold tracking-wider text-[#8a726c] uppercase font-['Outfit',sans-serif]">Explore Traditions</h3>
+<!-- Live Flash Timer Badge -->
+<div class="inline-flex items-center gap-1 text-[11px] font-bold text-[#9d3d26] bg-[#faece4] px-2.5 py-0.5 rounded-full border border-[#ecd2c4]">
+<span class="material-symbols-outlined text-[12px] animate-spin">timelapse</span>
+<span>Flash: <span id="countdown-timer">64m 42s</span></span>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-2.5">
+<div class="bg-white border border-[#e7e2d9] rounded-2xl p-2.5 flex flex-col items-center text-center justify-between h-28 shadow-xs hover:border-[#bd553b]/50 transition cursor-pointer active:scale-95" onclick="openWalletModal()">
+<div class="w-10 h-10 rounded-xl bg-[#cfeac5] text-[#364c31] flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-[20px]">loyalty</span>
+</div>
+<span class="text-[11px] font-semibold text-[#1d1c16] leading-tight">Winter Passes</span>
+</div>
+<div class="bg-white border border-[#e7e2d9] rounded-2xl p-2.5 flex flex-col items-center text-center justify-between h-28 shadow-xs hover:border-[#bd553b]/50 transition cursor-pointer active:scale-95 relative overflow-hidden" onclick="triggerFlashFillPromo()">
+<div class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#9d3d26] rounded-full"></div>
+<div class="w-10 h-10 rounded-xl bg-[#ffdad2] text-[#9d3d26] flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<span class="text-[11px] font-semibold text-[#1d1c16] leading-tight">Flash Fills</span>
+</div>
+<div class="bg-white border border-[#e7e2d9] rounded-2xl p-2.5 flex flex-col items-center text-center justify-between h-28 shadow-xs hover:border-[#bd553b]/50 transition cursor-pointer active:scale-95" onclick="openReservationModal('Village Hearth Tables')">
+<div class="w-10 h-10 rounded-xl bg-[#ffddb4] text-[#805200] flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-[20px]">table_restaurant</span>
+</div>
+<span class="text-[11px] font-semibold text-[#1d1c16] leading-tight">Village Dine-in</span>
+</div>
+<div class="bg-white border border-[#e7e2d9] rounded-2xl p-2.5 flex flex-col items-center text-center justify-between h-28 shadow-xs hover:border-[#bd553b]/50 transition cursor-pointer active:scale-95" onclick="filterSundayRoasts()">
+<div class="w-10 h-10 rounded-xl bg-[#f2ede4] text-[#802913] flex items-center justify-center mt-1">
+<span class="material-symbols-outlined text-[20px]">soup_kitchen</span>
+</div>
+<span class="text-[11px] font-semibold text-[#1d1c16] leading-tight">Sunday Roasts</span>
+</div>
+</div>
+</section>
+<!-- END: ExploreMoreSection -->
+<!-- BEGIN: FeaturedRestaurantsSection -->
+<section class="pt-3 pb-6" data-purpose="featured-listing">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[11px] font-bold tracking-wider text-[#8a726c] uppercase font-['Outfit',sans-serif]" id="venue-count">57 Tavernas &amp; Hearth Kitchens</p>
+<button class="text-xs font-semibold text-[#9d3d26] cursor-pointer hover:underline" onclick="resetFilters()" type="button">View all</button>
+</div>
+<h2 class="text-xl font-bold text-[#1d1c16] tracking-tight mb-3 font-['Outfit',sans-serif]">Featured Taverns &amp; Kitchens</h2>
+<!-- Container for interactive venue cards -->
+<div class="space-y-4" id="venues-list">
+<!-- Card 1: To Patriko -->
+<article class="venue-card bg-white rounded-3xl overflow-hidden border border-[#ede8df] shadow-md relative group transition-all duration-300" data-category="Kleftiko Meze" data-distance="1.2" data-hearth="true" data-name="To Patriko Woodfire Tavern" data-rating="4.8" data-tags="hearth woodfired kleftiko meze pork halloumi" data-venue-id="1">
+<div class="relative w-full h-56 bg-[#f2ede4] overflow-hidden">
+<img alt="Woodfire Cypriot Hearth Feast" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" onclick="openReservationModal('To Patriko Woodfire Tavern')" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKcb9JAWC86Md6xwvWQteG1lzu6LW7BrMa3uLuQUIZE76hdatzQd_1-8pRqd-wgPSr1FebXQFUmYyQXwWwG7xHKThTn-s-tbzK9FuqwzgXPMbXDWZ0ZUdV-i8NlmgCiDcn-3cWvvQGm1IX49Z-mDn6m-THstZEwno7CcNpqS8FSv7eDGE5ySBsha3R8t0mRsFLUsGsv01VWRlCx92q6PKhY4R3IfkcLp4NxqRi1dA"/>
+<div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+<div class="bg-[#1d1c16]/80 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center space-x-2 border border-white/20 shadow-sm pointer-events-auto">
+<span class="w-2 h-2 rounded-full bg-[#feb956]"></span>
+<span class="text-xs font-semibold text-white tracking-tight">Double Smoked Halloumi &amp; Pork · €7.50</span>
+</div>
+<!-- Bookmark Button -->
+<button aria-label="Save dish" class="bookmark-btn pointer-events-auto bg-[#1d1c16]/70 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-[#1d1c16] active:scale-90 transition" onclick="toggleBookmark(this, event, 'To Patriko')">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3">
+<button aria-label="Reserve" class="w-11 h-11 rounded-full bg-[#9d3d26] hover:bg-[#802913] flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform cursor-pointer" onclick="openReservationModal('To Patriko Woodfire Tavern')">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-3.5 flex justify-between items-center bg-white cursor-pointer" onclick="openReservationModal('To Patriko Woodfire Tavern')">
+<div class="space-y-0.5">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-base text-[#1d1c16] font-['Outfit',sans-serif]">To Patriko Woodfire Tavern</h4>
+<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f8f3ea] text-[#805200] border border-[#e7e2d9] ember-glow flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px] text-[#feb956]">local_fire_department</span> Hearth Lit
+            </span>
+</div>
+<p class="text-xs text-[#56423d]">Larnaca Village · Traditional Cypriot · 25-35 mins · 1.2 km</p>
+</div>
+<div class="flex items-center space-x-1 bg-[#cce7c3] border border-[#b3ceaa] px-2.5 py-1 rounded-xl text-[#0b2009] text-xs font-bold shadow-2xs">
+<span>4.8</span>
+<span class="material-symbols-outlined text-[14px] text-[#364c31]">star</span>
+</div>
+</div>
+</article>
+<!-- Card 2: Mousikos Kleftiko Stone Oven -->
+<article class="venue-card bg-white rounded-3xl overflow-hidden border border-[#ede8df] shadow-md relative group transition-all duration-300" data-category="Kleftiko Breads" data-distance="0.8" data-hearth="true" data-name="Mousikos Village Hearth" data-rating="4.9" data-tags="hearth woodfired kleftiko slow lamb sourdough" data-venue-id="2">
+<div class="relative w-full h-44 bg-[#f2ede4] overflow-hidden">
+<img alt="Slow Cooked Village Lamb" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" onclick="openReservationModal('Mousikos Village Hearth')" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9N6m_K39tvqaw3DXlmFmH8CwJVtZSjHLr5ImPKePNvzBRHat5HYh7pbA1DYlzWQ5-LfPXy3GebwFv7ShBEZwPFk2uBDRWoPcKzkbsuqYdDM7oC9G6N4uFC77sRNfTLcqdKbOcfNa7wZLJmUHowh9d7WiCfB2McdOpUoEOEHJ6zKHMfkGreZCNbfctfG2Bl2hf3xbW5SfljNsKvw6BrdmXSB1GPXhcAbPH_eoykvs"/>
+<div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+<div class="bg-[#1d1c16]/80 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center space-x-2 border border-white/20 shadow-sm pointer-events-auto">
+<span class="w-2 h-2 rounded-full bg-[#feb956]"></span>
+<span class="text-xs font-semibold text-white tracking-tight">6-Hour Clay Pot Kleftiko · €14.00</span>
+</div>
+<button aria-label="Save dish" class="bookmark-btn pointer-events-auto bg-[#1d1c16]/70 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-[#1d1c16] active:scale-90 transition" onclick="toggleBookmark(this, event, 'Mousikos')">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3">
+<button aria-label="Reserve" class="w-11 h-11 rounded-full bg-[#9d3d26] hover:bg-[#802913] flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform cursor-pointer" onclick="openReservationModal('Mousikos Village Hearth')">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-3.5 flex justify-between items-center bg-white cursor-pointer" onclick="openReservationModal('Mousikos Village Hearth')">
+<div class="space-y-0.5">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-base text-[#1d1c16] font-['Outfit',sans-serif]">Mousikos Village Hearth</h4>
+<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f8f3ea] text-[#805200] border border-[#e7e2d9] ember-glow flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px] text-[#feb956]">local_fire_department</span> Hearth Lit
+            </span>
+</div>
+<p class="text-xs text-[#56423d]">Sotira Traditional Quarter · Kleftiko Specialists · 0.8 km</p>
+</div>
+<div class="flex items-center space-x-1 bg-[#cce7c3] border border-[#b3ceaa] px-2.5 py-1 rounded-xl text-[#0b2009] text-xs font-bold shadow-2xs">
+<span>4.9</span>
+<span class="material-symbols-outlined text-[14px] text-[#364c31]">star</span>
+</div>
+</div>
+</article>
+<!-- Card 3: Karas Souvlaki & Charcoal Grills -->
+<article class="venue-card bg-white rounded-3xl overflow-hidden border border-[#ede8df] shadow-md relative group transition-all duration-300" data-category="Souvlaki" data-distance="0.4" data-hearth="false" data-name="Karas Charcoal Souvlaki" data-rating="4.7" data-tags="souvlaki sheftalia pita charcoal grill pork gyro" data-venue-id="3">
+<div class="relative w-full h-44 bg-[#f2ede4] overflow-hidden">
+<img alt="Cypriot Pita Souvlaki" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" onclick="openReservationModal('Karas Charcoal Souvlaki')" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq-yj3tn-rb02wPMf-r4vlwGO-evdE4mM_tgkQoAk4GTGOQQtVad1udr_VbIqMdXg0DLwGA_C9FahMa5KKDhl_gB6I2jtk1S45w4msAuZl-T4CvBDTZUmdf-7Uhi-tQQ4PQ1MdXBjpIPxINYNHzwcsM9KxRM1WAmSm2Jy2jaTuphi1gawi8CIMTceRIhHFRc6lTH0Y3TKHeq8TLESsFm5Du-dbXnSFW2JLB7Mjydw"/>
+<div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+<div class="bg-[#1d1c16]/80 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center space-x-2 border border-white/20 shadow-sm pointer-events-auto">
+<span class="w-2 h-2 rounded-full bg-[#feb956]"></span>
+<span class="text-xs font-semibold text-white tracking-tight">Mixed Pork &amp; Sheftalia Pita · €8.20</span>
+</div>
+<button aria-label="Save dish" class="bookmark-btn pointer-events-auto bg-[#1d1c16]/70 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-[#1d1c16] active:scale-90 transition" onclick="toggleBookmark(this, event, 'Karas')">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3">
+<button aria-label="Reserve" class="w-11 h-11 rounded-full bg-[#9d3d26] hover:bg-[#802913] flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform cursor-pointer" onclick="openReservationModal('Karas Charcoal Souvlaki')">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-3.5 flex justify-between items-center bg-white cursor-pointer" onclick="openReservationModal('Karas Charcoal Souvlaki')">
+<div class="space-y-0.5">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-base text-[#1d1c16] font-['Outfit',sans-serif]">Karas Charcoal Souvlaki</h4>
+<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#cfeac5] text-[#364c31] border border-[#b3ceaa]">Pass Perks</span>
+</div>
+<p class="text-xs text-[#56423d]">Limassol Promenade · Cypriot Charcoal · 0.4 km</p>
+</div>
+<div class="flex items-center space-x-1 bg-[#cce7c3] border border-[#b3ceaa] px-2.5 py-1 rounded-xl text-[#0b2009] text-xs font-bold shadow-2xs">
+<span>4.7</span>
+<span class="material-symbols-outlined text-[14px] text-[#364c31]">star</span>
+</div>
+</div>
+</article>
+<!-- Card 4: Thalassaki Harbor Kitchen -->
+<article class="venue-card bg-white rounded-3xl overflow-hidden border border-[#ede8df] shadow-md relative group transition-all duration-300" data-category="Seafood Meze" data-distance="2.1" data-hearth="false" data-name="Thalassaki Catch &amp; Hearth" data-rating="4.6" data-tags="seafood fish meze octopus calamari harbor" data-venue-id="4">
+<div class="relative w-full h-44 bg-[#f2ede4] overflow-hidden">
+<img alt="Fresh Mediterranean Fish Meze" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer" onclick="openReservationModal('Thalassaki Catch &amp; Hearth')" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIGplyQtHb4POWQv4_hfkXg86QAsI1545Mf3Z6T8Ho-3fcRZ_HshDYBFlQUN2_UXLFnYyy_Cm4SoPNvvy_gZW5phm06RiJQ0igjgPkih2vr0UTF2VrM1KG-1Y67-4-EWmJUA40DT71Orh8Po1RTDmnFgwv1jwDJR17p3UGVfBWrykzcT2HukfPHZzMGiwevly60Mo_rtzlVYz8ooyvkPKcvkvNGcZReTt5CxXJMQM"/>
+<div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+<div class="bg-[#1d1c16]/80 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center space-x-2 border border-white/20 shadow-sm pointer-events-auto">
+<span class="w-2 h-2 rounded-full bg-[#feb956]"></span>
+<span class="text-xs font-semibold text-white tracking-tight">Grilled Mediterranean Octopus · €16.50</span>
+</div>
+<button aria-label="Save dish" class="bookmark-btn pointer-events-auto bg-[#1d1c16]/70 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center text-white hover:bg-[#1d1c16] active:scale-90 transition" onclick="toggleBookmark(this, event, 'Thalassaki')">
+<span class="material-symbols-outlined text-[18px]">bookmark_border</span>
+</button>
+</div>
+<div class="absolute bottom-3 left-3">
+<button aria-label="Reserve" class="w-11 h-11 rounded-full bg-[#9d3d26] hover:bg-[#802913] flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform cursor-pointer" onclick="openReservationModal('Thalassaki Catch &amp; Hearth')">
+<span class="material-symbols-outlined text-[22px]">add</span>
+</button>
+</div>
+</div>
+<div class="p-3.5 flex justify-between items-center bg-white cursor-pointer" onclick="openReservationModal('Thalassaki Catch &amp; Hearth')">
+<div class="space-y-0.5">
+<div class="flex items-center gap-2">
+<h4 class="font-bold text-base text-[#1d1c16] font-['Outfit',sans-serif]">Thalassaki Catch &amp; Hearth</h4>
+<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#cfeac5] text-[#364c31] border border-[#b3ceaa]">Pass Perks</span>
+</div>
+<p class="text-xs text-[#56423d]">Limassol Marina · Fresh Catch Meze · 2.1 km</p>
+</div>
+<div class="flex items-center space-x-1 bg-[#cce7c3] border border-[#b3ceaa] px-2.5 py-1 rounded-xl text-[#0b2009] text-xs font-bold shadow-2xs">
+<span>4.6</span>
+<span class="material-symbols-outlined text-[14px] text-[#364c31]">star</span>
+</div>
+</div>
+</article>
+</div>
+<div class="hidden text-center py-10 px-4 bg-white rounded-3xl border border-[#ede8df] mt-4" id="no-results">
+<div class="w-12 h-12 rounded-full bg-[#faece4] text-[#9d3d26] mx-auto flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-2xl">search_off</span>
+</div>
+<p class="font-bold text-sm text-[#1d1c16] font-['Outfit',sans-serif]">No hearths or tavernas found</p>
+<p class="text-xs text-[#8a726c] mt-1">Try another dish keyword or clear your active filters.</p>
+<button class="mt-3 px-4 py-1.5 rounded-xl bg-[#9d3d26] text-white text-xs font-bold active:scale-95 transition" onclick="resetFilters()">Reset Filters</button>
+</div>
+</section>
+<!-- END: FeaturedRestaurantsSection -->
+</main>
+<!-- BEGIN: BottomNavigation -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#fef9f0]/95 backdrop-blur-md border-t border-[#ddc0ba]/60 px-4 py-2 z-40 flex justify-around items-center shadow-lg" data-purpose="mobile-navbar">
+<button class="nav-tab flex flex-col items-center text-[#9d3d26] group relative py-0.5 cursor-pointer" onclick="switchNavTab('discover', this)" type="button">
+<span class="material-symbols-outlined text-[22px]">explore</span>
+<span class="text-[10px] font-bold mt-0.5 font-['Outfit',sans-serif]">Discover</span>
+<span class="tab-indicator w-1 h-1 bg-[#9d3d26] rounded-full mt-0.5"></span>
+</button>
+<button class="nav-tab flex flex-col items-center text-[#56423d] hover:text-[#1d1c16] transition group py-0.5 cursor-pointer" onclick="switchNavTab('kouzina', this)" type="button">
+<span class="material-symbols-outlined text-[22px]">soup_kitchen</span>
+<span class="text-[10px] font-medium mt-0.5">Kouzina</span>
+<span class="tab-indicator w-1 h-1 bg-transparent rounded-full mt-0.5"></span>
+</button>
+<button class="nav-tab flex flex-col items-center text-[#56423d] hover:text-[#1d1c16] transition group py-0.5 cursor-pointer" onclick="switchNavTab('pass', this); openWalletModal()" type="button">
+<span class="material-symbols-outlined text-[22px]">verified</span>
+<span class="text-[10px] font-medium mt-0.5">Pass</span>
+<span class="tab-indicator w-1 h-1 bg-transparent rounded-full mt-0.5"></span>
+</button>
+<button class="nav-tab flex flex-col items-center text-[#56423d] hover:text-[#1d1c16] transition group py-0.5 cursor-pointer" onclick="switchNavTab('events', this)" type="button">
+<span class="material-symbols-outlined text-[22px]">calendar_month</span>
+<span class="text-[10px] font-medium mt-0.5">Events</span>
+<span class="tab-indicator w-1 h-1 bg-transparent rounded-full mt-0.5"></span>
+</button>
+<button class="nav-tab flex flex-col items-center text-[#56423d] hover:text-[#1d1c16] transition group py-0.5 cursor-pointer" onclick="switchNavTab('partner', this)" type="button">
+<span class="material-symbols-outlined text-[22px]">handshake</span>
+<span class="text-[10px] font-medium mt-0.5">Partner</span>
+<span class="tab-indicator w-1 h-1 bg-transparent rounded-full mt-0.5"></span>
+</button>
+</nav>
+<!-- END: BottomNavigation -->
+<!-- BEGIN: Interactive NFC Wallet / Pass Modal with Live NFC Check-in Simulation -->
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-300" id="wallet-modal">
+<div class="w-full max-w-md bg-[#fef9f0] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-[#ede8df] max-h-[92vh] overflow-y-auto transform translate-y-full transition-transform duration-300 no-scrollbar" id="wallet-modal-card">
+<!-- Modal Header -->
+<div class="px-5 pt-3.5 pb-2.5 flex items-center justify-between border-b border-[#ede8df] sticky top-0 bg-[#fef9f0] z-20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#9d3d26]">verified</span>
+<div>
+<h3 class="font-bold text-base text-[#1d1c16] font-['Outfit',sans-serif] leading-none">Kalihora Winter Pass &amp; Wallet</h3>
+<p class="text-[10px] text-[#8a726c] mt-0.5">Cypriot Hearth Verified Member</p>
+</div>
+</div>
+<button class="w-7 h-7 rounded-full bg-[#f2ede4] flex items-center justify-center text-[#56423d] hover:text-[#1d1c16] active:scale-90 transition cursor-pointer" onclick="closeWalletModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="p-4 space-y-3.5">
+<!-- Digital NFC Pass Card: Elena Constantinou, #KH-WP-9942, €130.00 credits -->
+<div class="relative rounded-2xl p-4 text-white overflow-hidden shadow-xl bg-gradient-to-tr from-[#742714] via-[#9d3d26] to-[#c2593f] border border-white/20">
+<div class="absolute -right-6 -bottom-6 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-start justify-between relative z-10">
+<div>
+<span class="text-[10px] uppercase tracking-widest text-[#ffddb4] font-bold">Kalihora Winter Pass · #KH-WP-9942</span>
+<h4 class="text-lg font-bold font-['Outfit',sans-serif] mt-0.5 leading-snug">Elena Constantinou</h4>
+</div>
+<div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shrink-0">
+<span class="material-symbols-outlined text-xl text-[#feb956]">contactless</span>
+</div>
+</div>
+<div class="mt-4 flex items-end justify-between relative z-10">
+<div>
+<p class="text-[11px] text-[#ffdad2] font-medium">Available Pass Credits</p>
+<p class="text-2xl font-extrabold font-['Outfit',sans-serif] tracking-tight" id="modal-wallet-balance">€130.00</p>
+</div>
+<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#cce7c3] text-[#0b2009] flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-[#364c31]"></span> Winter Member
+</span>
+</div>
+</div>
+<!-- Interactive NFC Check-In Card & Zone -->
+<div class="bg-white rounded-2xl border border-[#ddc0ba]/80 p-3.5 shadow-sm space-y-3" id="nfc-simulation-container">
+<!-- Active Table Banner -->
+<div class="flex items-center justify-between pb-2 border-b border-[#f2ede4]">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-[#feb956] animate-pulse"></span>
+<div>
+<span class="text-[10px] font-bold tracking-wider text-[#8a726c] uppercase block font-['Outfit',sans-serif]">Tonight's Hearth Table</span>
+<h5 class="text-xs font-bold text-[#1d1c16]">To Patriko Taverna (Table 4)</h5>
+</div>
+</div>
+<!-- Mode Switcher Pill: NFC vs QR -->
+<div class="flex items-center bg-[#f8f3ea] p-0.5 rounded-lg border border-[#e7e2d9] text-[10px]">
+<button class="px-2 py-0.5 rounded-md font-bold transition text-white bg-[#9d3d26]" id="toggle-mode-nfc" onclick="setNfcMode('nfc')" type="button">NFC</button>
+<button class="px-2 py-0.5 rounded-md font-medium transition text-[#56423d] hover:text-[#1d1c16]" id="toggle-mode-qr" onclick="setNfcMode('qr')" type="button">QR Key</button>
+</div>
+</div>
+<!-- STATE 1: Ready to Scan Hotspot -->
+<div class="py-2 flex flex-col items-center text-center space-y-2.5" id="nfc-state-ready">
+<div class="relative flex items-center justify-center my-1 cursor-pointer group active:scale-95 transition-transform" onclick="triggerNfcCheckIn()">
+<!-- Animated Wave Rings -->
+<div class="absolute w-20 h-20 rounded-full border-2 border-[#9d3d26]/40 nfc-wave pointer-events-none"></div>
+<div class="absolute w-28 h-28 rounded-full border border-[#feb956]/50 nfc-wave-delay pointer-events-none"></div>
+<button aria-label="Tap to simulate NFC check-in" class="relative z-10 w-16 h-16 rounded-full bg-gradient-to-br from-[#9d3d26] to-[#742714] text-white flex flex-col items-center justify-center shadow-md border-2 border-[#ffdad2] group-hover:shadow-lg transition">
+<span class="material-symbols-outlined text-[26px] text-[#feb956]">contactless</span>
+</button>
+</div>
+<div>
+<button class="text-xs font-bold text-[#9d3d26] hover:underline flex items-center justify-center gap-1 mx-auto cursor-pointer" onclick="triggerNfcCheckIn()" type="button">
+<span>Tap / Hold to Simulate NFC Check-In</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+<p class="text-[11px] text-[#8a726c] mt-0.5">Hold near wooden table beacon / To Patriko NFC disc</p>
+</div>
+</div>
+<!-- STATE 2: Scanning in Progress -->
+<div class="hidden py-4 flex flex-col items-center text-center space-y-3" id="nfc-state-scanning">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<div class="absolute inset-0 rounded-full border-3 border-[#faece4] border-t-[#9d3d26] animate-spin"></div>
+<span class="material-symbols-outlined text-2xl text-[#9d3d26]">sensors</span>
+</div>
+<div>
+<p class="text-xs font-bold text-[#1d1c16]">Connecting to Table 4 NFC Beacon...</p>
+<p class="text-[11px] text-[#8a726c] mt-0.5">Authenticating Elena Constantinou (#KH-WP-9942)</p>
+<div class="w-36 h-1 bg-[#f2ede4] rounded-full mx-auto mt-2 overflow-hidden">
+<div class="h-full bg-[#9d3d26] rounded-full animate-[pulse_1s_infinite] w-3/4"></div>
+</div>
+</div>
+</div>
+<!-- STATE 3: Success Verified State -->
+<div class="hidden space-y-3" id="nfc-state-success">
+<div class="bg-[#f0f6ec] border border-[#b9d5b0] rounded-xl p-3 flex items-start gap-2.5">
+<div class="w-8 h-8 rounded-full bg-[#364c31] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h6 class="text-xs font-bold text-[#1d1c16]">Check-In Verified · Table 4 Seated</h6>
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#cce7c3] text-[#0b2009]">Live</span>
+</div>
+<p class="text-[11px] text-[#364c31] font-semibold mt-0.5">Host: Yiannis &amp; Eleni notified at Hearth #1</p>
+<p class="text-[10px] text-[#56423d] mt-0.5">Booking Ref: <strong class="text-[#1d1c16]">#KH-7829-LIM</strong></p>
+</div>
+</div>
+<div class="bg-[#fff8f5] rounded-xl border border-[#ecd2c4] p-2.5 space-y-1 text-[11px] text-[#56423d]">
+<div class="flex items-center gap-1.5 text-[#364c31] font-medium">
+<span class="material-symbols-outlined text-[15px] text-[#364c31]">savings</span>
+<span><strong>€10 Pre-paid Deposit</strong> credited directly to table check</span>
+</div>
+<div class="flex items-center gap-1.5 text-[#9d3d26] font-medium">
+<span class="material-symbols-outlined text-[15px] text-[#9d3d26]">local_offer</span>
+<span><strong>25% Off Wood-Fired Kleftiko</strong> flash voucher active</span>
+</div>
+<div class="text-[10px] text-[#8a726c] pt-1 border-t border-[#f2ede4] flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#556b2f]">verified_user</span>
+<span>0% Aggregator Commission · Direct Taverna Relationship</span>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<button class="flex-1 py-2 px-3 rounded-xl bg-[#9d3d26] text-white text-xs font-bold shadow-xs hover:bg-[#802913] active:scale-95 transition cursor-pointer flex items-center justify-center gap-1" onclick="viewTableBill()">
+<span class="material-symbols-outlined text-[15px]">receipt_long</span>
+<span>View Table Bill</span>
+</button>
+<button class="py-2 px-3 rounded-xl border border-[#ddc0ba] bg-white text-xs font-semibold text-[#56423d] hover:bg-[#f8f3ea] active:scale-95 transition cursor-pointer" onclick="resetNfcSimulation()">
+Re-test
+</button>
+<button class="py-2 px-3 rounded-xl border border-[#ddc0ba] bg-white text-xs font-semibold text-[#56423d] hover:bg-[#f8f3ea] active:scale-95 transition cursor-pointer" onclick="closeWalletModal()">
+Close
+</button>
+</div>
+</div>
+<!-- Digital QR Key Fallback Panel (hidden by default) -->
+<div class="hidden py-3 flex flex-col items-center text-center space-y-2" id="qr-fallback-panel">
+<div class="p-3 bg-white border-2 border-dashed border-[#ddc0ba] rounded-2xl shadow-xs">
+<svg class="w-28 h-28 text-[#1d1c16]" fill="currentColor" viewbox="0 0 24 24">
+<path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm-2 10h8v8H2v-8zm2 2v4h4v-4H4zm10-14h8v8h-8V2zm2 2v4h4V4h-4zm2 10h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm-4-4h-2v-2h2v2zm-2 4h2v2h-2v-2zm8-2h-2v-2h2v2zM6 6h-1v-1h1v1zm0 12h-1v-1h1v1zm12-12h-1v-1h1v1z"></path>
+</svg>
+</div>
+<p class="text-xs font-bold text-[#1d1c16]">Pass Key: #KH-WP-9942-T4</p>
+<p class="text-[11px] text-[#8a726c]">Show this QR code to host staff if NFC is unavailable.</p>
+</div>
+</div>
+<!-- Quick Pass Actions -->
+<div class="grid grid-cols-2 gap-2">
+<button class="p-2.5 bg-white rounded-xl border border-[#ddc0ba]/60 flex flex-col items-center justify-center text-center gap-1 hover:border-[#9d3d26] active:scale-95 transition shadow-xs cursor-pointer group" onclick="triggerNfcCheckIn()">
+<div class="w-7 h-7 rounded-full bg-[#faece4] text-[#9d3d26] flex items-center justify-center group-hover:bg-[#9d3d26] group-hover:text-white transition">
+<span class="material-symbols-outlined text-[17px]">sensors</span>
+</div>
+<span class="text-xs font-bold text-[#1d1c16]">Simulate NFC Tap</span>
+<span class="text-[10px] text-[#8a726c]">Wood Table Beacon</span>
+</button>
+<button class="p-2.5 bg-white rounded-xl border border-[#ddc0ba]/60 flex flex-col items-center justify-center text-center gap-1 hover:border-[#9d3d26] active:scale-95 transition shadow-xs cursor-pointer group" onclick="topUpCredits(25)">
+<div class="w-7 h-7 rounded-full bg-[#cfeac5] text-[#364c31] flex items-center justify-center group-hover:bg-[#4d6547] group-hover:text-white transition">
+<span class="material-symbols-outlined text-[17px]">add_card</span>
+</div>
+<span class="text-xs font-bold text-[#1d1c16]">Top-up +€25</span>
+<span class="text-[10px] text-[#8a726c]">Apple Pay (1:1)</span>
+</button>
+</div>
+<!-- Card Perks Summary -->
+<div class="bg-[#f8f3ea] p-2.5 rounded-xl border border-[#e7e2d9] space-y-1 text-xs text-[#56423d]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-[#4d6547]">check_circle</span>
+<span class="text-[11px]">Zero reservation deposit fees at all hearths</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[15px] text-[#4d6547]">check_circle</span>
+<span class="text-[11px]">Complimentary village dessert &amp; digestif on arrival</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Interactive NFC Wallet / Pass Modal -->
+<!-- BEGIN: Interactive Reservation Bottom Sheet Modal -->
+<div class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-300" id="reservation-modal">
+<div class="w-full max-w-md bg-[#fef9f0] rounded-t-3xl shadow-2xl border-t border-[#ede8df] max-h-[90vh] overflow-y-auto transform translate-y-full transition-transform duration-300" id="reservation-modal-sheet">
+<!-- Drag Pill & Header -->
+<div class="pt-3 pb-2 px-5 sticky top-0 bg-[#fef9f0] border-b border-[#ede8df] z-10">
+<div class="w-12 h-1 bg-[#ddc0ba] rounded-full mx-auto mb-3"></div>
+<div class="flex items-center justify-between">
+<div>
+<span class="text-[10px] font-bold text-[#805200] uppercase tracking-wider font-['Outfit',sans-serif]">Table &amp; Hearth Booking</span>
+<h3 class="font-bold text-lg text-[#1d1c16] font-['Outfit',sans-serif] leading-tight" id="sheet-venue-name">To Patriko Woodfire Tavern</h3>
+</div>
+<button class="w-7 h-7 rounded-full bg-[#f2ede4] flex items-center justify-center text-[#56423d] hover:text-[#1d1c16] active:scale-90 transition cursor-pointer" onclick="closeReservationModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<div class="p-5 space-y-5">
+<!-- Party Size Selector -->
+<div>
+<label class="block text-xs font-bold text-[#8a726c] uppercase mb-2">Number of Guests</label>
+<div class="flex items-center justify-between bg-white p-2 rounded-2xl border border-[#ddc0ba]/60">
+<button class="w-10 h-10 rounded-xl bg-[#f2ede4] text-[#1d1c16] flex items-center justify-center active:scale-90 transition font-bold cursor-pointer" onclick="adjustGuests(-1)">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<div class="text-center">
+<span class="text-lg font-bold text-[#1d1c16] font-['Outfit',sans-serif]" id="guest-count">2</span>
+<span class="text-xs text-[#8a726c] block">Guests (Village Table)</span>
+</div>
+<button class="w-10 h-10 rounded-xl bg-[#faece4] text-[#9d3d26] flex items-center justify-center active:scale-90 transition font-bold cursor-pointer" onclick="adjustGuests(1)">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<!-- Time Slot Pills -->
+<div>
+<label class="block text-xs font-bold text-[#8a726c] uppercase mb-2">Seating Time (Tonight)</label>
+<div class="grid grid-cols-2 gap-2" id="time-slots">
+<button class="time-slot-btn p-2.5 rounded-xl border border-[#ddc0ba] bg-white text-xs font-semibold text-[#1d1c16] flex items-center justify-between active:scale-95 transition cursor-pointer" onclick="selectTimeSlot(this)" type="button">
+<span>19:30</span>
+<span class="text-[10px] text-[#4d6547] font-medium">Available</span>
+</button>
+<button class="time-slot-btn p-2.5 rounded-xl border-2 border-[#9d3d26] bg-[#faece4] text-xs font-bold text-[#9d3d26] flex items-center justify-between active:scale-95 transition cursor-pointer shadow-xs" onclick="selectTimeSlot(this)" type="button">
+<span>20:00</span>
+<span class="text-[10px] text-[#9d3d26] font-bold">Hearth Table</span>
+</button>
+<button class="time-slot-btn p-2.5 rounded-xl border border-[#ddc0ba] bg-white text-xs font-semibold text-[#1d1c16] flex items-center justify-between active:scale-95 transition cursor-pointer" onclick="selectTimeSlot(this)" type="button">
+<span>20:30</span>
+<span class="text-[10px] text-[#4d6547] font-medium">Available</span>
+</button>
+<button class="time-slot-btn p-2.5 rounded-xl border border-[#ddc0ba] bg-white text-xs font-semibold text-[#1d1c16] flex items-center justify-between active:scale-95 transition cursor-pointer" onclick="selectTimeSlot(this)" type="button">
+<span>21:00</span>
+<span class="text-[10px] text-[#805200] font-medium">2 left</span>
+</button>
+</div>
+</div>
+<!-- Dietary Tags Toggle -->
+<div>
+<label class="block text-xs font-bold text-[#8a726c] uppercase mb-2">Kitchen Dietary Notes</label>
+<div class="flex flex-wrap gap-2">
+<button class="dietary-btn px-3 py-1.5 rounded-full border border-[#ddc0ba] text-xs font-semibold bg-white text-[#56423d] active:scale-95 transition cursor-pointer" onclick="toggleDietaryTag(this)" type="button">
+            Vegetarian Options
+          </button>
+<button class="dietary-btn px-3 py-1.5 rounded-full border border-[#ddc0ba] text-xs font-semibold bg-white text-[#56423d] active:scale-95 transition cursor-pointer" onclick="toggleDietaryTag(this)" type="button">
+            Gluten-Free Hearth Bread
+          </button>
+<button class="dietary-btn px-3 py-1.5 rounded-full border border-[#ddc0ba] text-xs font-semibold bg-white text-[#56423d] active:scale-95 transition cursor-pointer" onclick="toggleDietaryTag(this)" type="button">
+            Nut Allergy
+          </button>
+<button class="dietary-btn px-3 py-1.5 rounded-full border border-[#ddc0ba] text-xs font-semibold bg-white text-[#56423d] active:scale-95 transition cursor-pointer" onclick="toggleDietaryTag(this)" type="button">
+            Courtyard Seating
+          </button>
+</div>
+</div>
+<!-- Payment Method Toggle -->
+<div>
+<label class="block text-xs font-bold text-[#8a726c] uppercase mb-2">Deposit / Booking Hold</label>
+<div class="grid grid-cols-2 gap-2 bg-[#f2ede4] p-1 rounded-2xl">
+<button class="py-2.5 px-3 rounded-xl text-xs font-bold transition bg-white text-[#9d3d26] shadow-xs flex items-center justify-center gap-1.5 cursor-pointer" id="pay-credits-btn" onclick="selectPaymentMethod('credits')" type="button">
+<span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+<span>€10 Pass Credits (1:1)</span>
+</button>
+<button class="py-2.5 px-3 rounded-xl text-xs font-semibold transition text-[#56423d] hover:text-[#1d1c16] flex items-center justify-center gap-1.5 cursor-pointer" id="pay-card-btn" onclick="selectPaymentMethod('card')" type="button">
+<span class="material-symbols-outlined text-[16px]">credit_card</span>
+<span>Credit Card</span>
+</button>
+</div>
+<p class="text-[11px] text-[#8a726c] mt-1.5 px-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-[#4d6547]">lock</span>
+          Fully refundable up to 1 hour before arrival.
+        </p>
+</div>
+<!-- Confirm Button -->
+<button class="w-full bg-[#9d3d26] hover:bg-[#802913] text-white font-bold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition cursor-pointer" id="confirm-booking-btn" onclick="confirmReservation()">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span id="confirm-btn-label">Confirm Table Reservation (€10 Hold)</span>
+</button>
+</div>
+</div>
+</div>
+<!-- END: Interactive Reservation Bottom Sheet Modal -->
+<!-- Floating Toast Notification -->
+<div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[90%] bg-[#1d1c16]/95 backdrop-blur-md text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-2.5 opacity-0 pointer-events-none transition-all duration-300" id="toast">
+<span class="material-symbols-outlined text-[#feb956] text-[20px]" id="toast-icon">check_circle</span>
+<span class="flex-1 leading-snug" id="toast-message">Notification message</span>
+</div>
+</div>
+<!-- Interactive Prototype Script -->
+<script>
+  // App State
+  let walletBalance = 130;
+  let currentGuestCount = 2;
+  let selectedPayment = 'credits';
+  let activeCategory = 'All';
+  let activeFilters = { hearth: true, toprated: false, nearme: false, passperks: false };
+  let currentSlide = 0;
+  let flashCountdownSeconds = 64 * 60 + 42; // 64m 42s
+  let nfcScanningTimeout = null;
+
+  const promoSlides = [
+    {
+      badge: "Cypriot Hearth",
+      title: "Winter Hearth Evenings",
+      desc: "25% Off slow-cooked kleftiko & village hearth meze.",
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ8UqOGJwKGmNxtjrpGl5_hA6-82FdBDF7C86bGzRrh3BvkB4g4uO2Y5dezL21lxhUBocFcQ8LSLL4imbMHT0GtxAmijH_J3f95bt1-qggl6ym_E9dFLsFiCH2eRB37-dp50ZU7dXTB8EhOf1jEN48DAPC7q6Qq0Z8qVe6Vbmn7GlfdojPHpFTLFYBhDlBYYEzKkVubCGfZjA-RoRABcUrrU1CHB3-G4omfTtlue0"
+    },
+    {
+      badge: "Clay Pot Specials",
+      title: "Weekend Slow Kleftiko",
+      desc: "Direct from the mountain wood-fired stone ovens.",
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuA9N6m_K39tvqaw3DXlmFmH8CwJVtZSjHLr5ImPKePNvzBRHat5HYh7pbA1DYlzWQ5-LfPXy3GebwFv7ShBEZwPFk2uBDRWoPcKzkbsuqYdDM7oC9G6N4uFC77sRNfTLcqdKbOcfNa7wZLJmUHowh9d7WiCfB2McdOpUoEOEHJ6zKHMfkGreZCNbfctfG2Bl2hf3xbW5SfljNsKvw6BrdmXSB1GPXhcAbPH_eoykvs"
+    },
+    {
+      badge: "Coastal Seafood",
+      title: "Marina Fresh Catch",
+      desc: "Charcoal grilled octopus & calamari meze with sea salt.",
+      img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBIGplyQtHb4POWQv4_hfkXg86QAsI1545Mf3Z6T8Ho-3fcRZ_HshDYBFlQUN2_UXLFnYyy_Cm4SoPNvvy_gZW5phm06RiJQ0igjgPkih2vr0UTF2VrM1KG-1Y67-4-EWmJUA40DT71Orh8Po1RTDmnFgwv1jwDJR17p3UGVfBWrykzcT2HukfPHZzMGiwevly60Mo_rtzlVYz8ooyvkPKcvkvNGcZReTt5CxXJMQM"
+    }
+  ];
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    startCountdown();
+  });
+
+  // Toast Functionality
+  function showToast(message, icon = 'check_circle') {
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    
+    toastMsg.textContent = message;
+    toastIcon.textContent = icon;
+
+    toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 3200);
+  }
+
+  // Live Flash Countdown Timer
+  function startCountdown() {
+    const timerElem = document.getElementById('countdown-timer');
+    setInterval(() => {
+      if (flashCountdownSeconds > 0) {
+        flashCountdownSeconds--;
+        const m = Math.floor(flashCountdownSeconds / 60);
+        const s = flashCountdownSeconds % 60;
+        timerElem.textContent = `${m}m ${s < 10 ? '0' : ''}${s}s`;
+      }
+    }, 1000);
+  }
+
+  // Wallet Modal
+  function openWalletModal() {
+    const modal = document.getElementById('wallet-modal');
+    const card = document.getElementById('wallet-modal-card');
+    document.getElementById('modal-wallet-balance').textContent = `€${walletBalance}.00`;
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.add('opacity-100');
+    card.classList.remove('translate-y-full');
+    card.classList.add('translate-y-0');
+  }
+
+  function closeWalletModal() {
+    const modal = document.getElementById('wallet-modal');
+    const card = document.getElementById('wallet-modal-card');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    modal.classList.remove('opacity-100');
+    card.classList.add('translate-y-full');
+    card.classList.remove('translate-y-0');
+  }
+
+  // NFC Simulation Logic
+  function setNfcMode(mode) {
+    const nfcBtn = document.getElementById('toggle-mode-nfc');
+    const qrBtn = document.getElementById('toggle-mode-qr');
+    const qrPanel = document.getElementById('qr-fallback-panel');
+    const readyState = document.getElementById('nfc-state-ready');
+    const scanningState = document.getElementById('nfc-state-scanning');
+    const successState = document.getElementById('nfc-state-success');
+
+    if (mode === 'qr') {
+      qrBtn.className = "px-2 py-0.5 rounded-md font-bold transition text-white bg-[#9d3d26]";
+      nfcBtn.className = "px-2 py-0.5 rounded-md font-medium transition text-[#56423d] hover:text-[#1d1c16]";
+      qrPanel.classList.remove('hidden');
+      readyState.classList.add('hidden');
+      scanningState.classList.add('hidden');
+      successState.classList.add('hidden');
+    } else {
+      nfcBtn.className = "px-2 py-0.5 rounded-md font-bold transition text-white bg-[#9d3d26]";
+      qrBtn.className = "px-2 py-0.5 rounded-md font-medium transition text-[#56423d] hover:text-[#1d1c16]";
+      qrPanel.classList.add('hidden');
+      // restore whatever state was active or ready
+      if (successState.dataset.active === 'true') {
+        successState.classList.remove('hidden');
+      } else {
+        readyState.classList.remove('hidden');
+      }
+    }
+  }
+
+  function triggerNfcCheckIn() {
+    setNfcMode('nfc');
+    const readyState = document.getElementById('nfc-state-ready');
+    const scanningState = document.getElementById('nfc-state-scanning');
+    const successState = document.getElementById('nfc-state-success');
+
+    readyState.classList.add('hidden');
+    scanningState.classList.remove('hidden');
+    successState.classList.add('hidden');
+    successState.dataset.active = 'false';
+
+    if (nfcScanningTimeout) clearTimeout(nfcScanningTimeout);
+
+    nfcScanningTimeout = setTimeout(() => {
+      scanningState.classList.add('hidden');
+      successState.classList.remove('hidden');
+      successState.dataset.active = 'true';
+      showToast('NFC Table 4 Verified · Host Yiannis & Eleni Notified', 'verified');
+    }, 1100);
+  }
+
+  function resetNfcSimulation() {
+    const readyState = document.getElementById('nfc-state-ready');
+    const scanningState = document.getElementById('nfc-state-scanning');
+    const successState = document.getElementById('nfc-state-success');
+
+    readyState.classList.remove('hidden');
+    scanningState.classList.add('hidden');
+    successState.classList.add('hidden');
+    successState.dataset.active = 'false';
+    showToast('NFC check-in reset. Ready to test again.');
+  }
+
+  function viewTableBill() {
+    showToast('Table 4 Bill Open: €10 Pre-paid Deposit Credited · 25% Off Active', 'receipt_long');
+  }
+
+  function topUpCredits(amount) {
+    walletBalance += amount;
+    updateWalletDisplays();
+    showToast(`Added €${amount} credits via Apple Pay`, 'add_card');
+  }
+
+  function updateWalletDisplays() {
+    document.getElementById('header-credits-text').textContent = `€${walletBalance} credits`;
+    document.getElementById('modal-wallet-balance').textContent = `€${walletBalance}.00`;
+  }
+
+  // Hero Carousel
+  function switchPromoSlide(index) {
+    currentSlide = index;
+    const slide = promoSlides[index];
+    const title = document.getElementById('promo-title');
+    const desc = document.getElementById('promo-desc');
+    const tag = document.getElementById('promo-tag-text');
+    const img = document.getElementById('promo-img');
+
+    title.style.opacity = 0;
+    desc.style.opacity = 0;
+
+    setTimeout(() => {
+      title.textContent = slide.title;
+      desc.textContent = slide.desc;
+      tag.textContent = slide.badge;
+      img.src = slide.img;
+      title.style.opacity = 1;
+      desc.style.opacity = 1;
+    }, 150);
+
+    for (let i = 0; i < 3; i++) {
+      const dot = document.getElementById(`dot-${i}`);
+      if (i === index) {
+        dot.className = "w-4 h-1.5 rounded-full bg-white transition-all duration-300";
+      } else {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-white/40 hover:bg-white/80 transition-all duration-300";
+      }
+    }
+  }
+
+  // Reservation Bottom Sheet
+  function openReservationModal(venueTitle) {
+    const modal = document.getElementById('reservation-modal');
+    const sheet = document.getElementById('reservation-modal-sheet');
+    document.getElementById('sheet-venue-name').textContent = venueTitle || "To Patriko Woodfire Tavern";
+    
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    modal.classList.add('opacity-100');
+    sheet.classList.remove('translate-y-full');
+    sheet.classList.add('translate-y-0');
+  }
+
+  function closeReservationModal() {
+    const modal = document.getElementById('reservation-modal');
+    const sheet = document.getElementById('reservation-modal-sheet');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    modal.classList.remove('opacity-100');
+    sheet.classList.add('translate-y-full');
+    sheet.classList.remove('translate-y-0');
+  }
+
+  function adjustGuests(delta) {
+    currentGuestCount = Math.max(1, Math.min(8, currentGuestCount + delta));
+    document.getElementById('guest-count').textContent = currentGuestCount;
+  }
+
+  function selectTimeSlot(btn) {
+    document.querySelectorAll('.time-slot-btn').forEach(b => {
+      b.classList.remove('border-2', 'border-[#9d3d26]', 'bg-[#faece4]', 'text-[#9d3d26]');
+      b.classList.add('border', 'border-[#ddc0ba]', 'bg-white', 'text-[#1d1c16]');
+    });
+    btn.classList.add('border-2', 'border-[#9d3d26]', 'bg-[#faece4]', 'text-[#9d3d26]');
+    btn.classList.remove('border', 'border-[#ddc0ba]', 'bg-white');
+  }
+
+  function toggleDietaryTag(btn) {
+    if (btn.classList.contains('bg-[#9d3d26]')) {
+      btn.classList.remove('bg-[#9d3d26]', 'text-white', 'border-[#9d3d26]');
+      btn.classList.add('bg-white', 'text-[#56423d]', 'border-[#ddc0ba]');
+    } else {
+      btn.classList.remove('bg-white', 'text-[#56423d]', 'border-[#ddc0ba]');
+      btn.classList.add('bg-[#9d3d26]', 'text-white', 'border-[#9d3d26]');
+    }
+  }
+
+  function selectPaymentMethod(method) {
+    selectedPayment = method;
+    const creditsBtn = document.getElementById('pay-credits-btn');
+    const cardBtn = document.getElementById('pay-card-btn');
+    const confirmLabel = document.getElementById('confirm-btn-label');
+
+    if (method === 'credits') {
+      creditsBtn.classList.add('bg-white', 'text-[#9d3d26]', 'shadow-xs');
+      creditsBtn.classList.remove('text-[#56423d]');
+      cardBtn.classList.remove('bg-white', 'text-[#9d3d26]', 'shadow-xs');
+      cardBtn.classList.add('text-[#56423d]');
+      confirmLabel.textContent = "Confirm Table Reservation (€10 Hold)";
+    } else {
+      cardBtn.classList.add('bg-white', 'text-[#9d3d26]', 'shadow-xs');
+      cardBtn.classList.remove('text-[#56423d]');
+      creditsBtn.classList.remove('bg-white', 'text-[#9d3d26]', 'shadow-xs');
+      creditsBtn.classList.add('text-[#56423d]');
+      confirmLabel.textContent = "Confirm Table Reservation (Card Pre-Auth)";
+    }
+  }
+
+  function confirmReservation() {
+    const venueName = document.getElementById('sheet-venue-name').textContent;
+    if (selectedPayment === 'credits') {
+      if (walletBalance >= 10) {
+        walletBalance -= 10;
+        updateWalletDisplays();
+        closeReservationModal();
+        showToast(`Reservation #KH-7829-LIM Confirmed · €10 Credits Deducted at ${venueName}`);
+      } else {
+        showToast('Insufficient credits. Please top up or choose card.', 'warning');
+      }
+    } else {
+      closeReservationModal();
+      showToast(`Reservation #KH-7829-LIM Confirmed at ${venueName} · Card Pre-authorized`);
+    }
+  }
+
+  // Bookmark / Favorite Toggle
+  function toggleBookmark(btn, event, venueName) {
+    if (event) event.stopPropagation();
+    const icon = btn.querySelector('.material-symbols-outlined');
+    btn.classList.add('heart-pop');
+    setTimeout(() => btn.classList.remove('heart-pop'), 400);
+
+    if (icon.textContent === 'bookmark_border') {
+      icon.textContent = 'bookmark';
+      btn.classList.add('text-[#feb956]');
+      showToast(`Saved ${venueName} to favorites`, 'bookmark');
+    } else {
+      icon.textContent = 'bookmark_border';
+      btn.classList.remove('text-[#feb956]');
+      showToast(`Removed ${venueName} from favorites`, 'bookmark_border');
+    }
+  }
+
+  // Search and Filtering
+  function handleSearch(query) {
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (query.trim().length > 0) {
+      clearBtn.classList.remove('hidden');
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+    applyAllFilters();
+  }
+
+  function clearSearch() {
+    const input = document.getElementById('search-input');
+    input.value = '';
+    document.getElementById('search-clear-btn').classList.add('hidden');
+    applyAllFilters();
+  }
+
+  function selectCategory(catName) {
+    activeCategory = catName;
+    document.querySelectorAll('.category-item').forEach(el => {
+      const ring = el.querySelector('.cat-ring');
+      const label = el.querySelector('.cat-label');
+      const bar = el.querySelector('.cat-bar');
+
+      if (el.dataset.cat === catName) {
+        ring.className = "cat-ring w-14 h-14 rounded-full bg-white p-0.5 border-2 border-[#9d3d26] flex items-center justify-center shadow-sm";
+        label.className = "cat-label text-xs font-bold text-[#9d3d26] mt-1.5";
+        bar.className = "cat-bar w-5 h-0.5 bg-[#9d3d26] rounded-full mt-1";
+      } else {
+        ring.className = "cat-ring w-14 h-14 rounded-full bg-white p-0.5 border border-[#ddc0ba] flex items-center justify-center shadow-xs group-hover:border-[#9d3d26] transition-colors";
+        label.className = "cat-label text-xs font-medium text-[#56423d] mt-1.5";
+        bar.className = "cat-bar w-5 h-0.5 bg-transparent rounded-full mt-1";
+      }
+    });
+    applyAllFilters();
+  }
+
+  function toggleFilter(filterKey) {
+    activeFilters[filterKey] = !activeFilters[filterKey];
+    const btn = document.getElementById(`pill-${filterKey}`);
+
+    if (activeFilters[filterKey]) {
+      btn.className = "filter-pill bg-[#9d3d26] text-white text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#9d3d26] flex items-center space-x-1.5 shrink-0 shadow-xs active:scale-95 transition";
+    } else {
+      btn.className = "filter-pill bg-white hover:bg-[#f8f3ea] text-[#1d1c16] text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#ddc0ba] flex items-center space-x-1.5 shrink-0 shadow-xs active:scale-95 transition";
+    }
+    applyAllFilters();
+  }
+
+  function resetFilters() {
+    activeCategory = 'All';
+    activeFilters = { hearth: false, toprated: false, nearme: false, passperks: false };
+    
+    // reset category chips UI
+    selectCategory('All');
+    
+    // reset pills UI
+    ['hearth', 'toprated', 'nearme', 'passperks'].forEach(k => {
+      const btn = document.getElementById(`pill-${k}`);
+      btn.className = "filter-pill bg-white hover:bg-[#f8f3ea] text-[#1d1c16] text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#ddc0ba] flex items-center space-x-1.5 shrink-0 shadow-xs active:scale-95 transition";
+    });
+
+    clearSearch();
+    showToast('Filters reset to show all venues');
+  }
+
+  function applyAllFilters() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.venue-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const name = card.dataset.name.toLowerCase();
+      const cat = card.dataset.category.toLowerCase();
+      const tags = card.dataset.tags.toLowerCase();
+      const isHearth = card.dataset.hearth === 'true';
+      const rating = parseFloat(card.dataset.rating);
+      const distance = parseFloat(card.dataset.distance);
+
+      let matchesSearch = !q || name.includes(q) || cat.includes(q) || tags.includes(q);
+      let matchesCat = (activeCategory === 'All') || cat.includes(activeCategory.toLowerCase());
+      let matchesHearth = !activeFilters.hearth || isHearth;
+      let matchesTopRated = !activeFilters.toprated || rating >= 4.8;
+      let matchesNearMe = !activeFilters.nearme || distance <= 1.0;
+      let matchesPass = !activeFilters.passperks || tags.includes('sheftalia') || tags.includes('harbor') || tags.includes('pass');
+
+      if (matchesSearch && matchesCat && matchesHearth && matchesTopRated && matchesNearMe && matchesPass) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    const noResults = document.getElementById('no-results');
+    const countLabel = document.getElementById('venue-count');
+
+    if (visibleCount === 0) {
+      noResults.classList.remove('hidden');
+      countLabel.textContent = '0 Tavernas found';
+    } else {
+      noResults.classList.add('hidden');
+      countLabel.textContent = `${visibleCount} Tavernas & Hearth Kitchens`;
+    }
+  }
+
+  // Quick Shortcut Actions
+  function triggerFlashFillPromo() {
+    showToast('Flash Fill: 2 tables opened up for dinner tonight!', 'bolt');
+    openReservationModal('To Patriko Woodfire Tavern');
+  }
+
+  function filterSundayRoasts() {
+    document.getElementById('search-input').value = 'kleftiko';
+    handleSearch('kleftiko');
+    showToast('Filtered: Sunday slow-roasted woodfire lamb & beef');
+  }
+
+  // Bottom Nav Bar Tab Switcher
+  function switchNavTab(tabName, clickedBtn) {
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.classList.remove('text-[#9d3d26]');
+      tab.classList.add('text-[#56423d]');
+      const ind = tab.querySelector('.tab-indicator');
+      if (ind) ind.classList.replace('bg-[#9d3d26]', 'bg-transparent');
+    });
+
+    clickedBtn.classList.remove('text-[#56423d]');
+    clickedBtn.classList.add('text-[#9d3d26]');
+    const activeIndicator = clickedBtn.querySelector('.tab-indicator');
+    if (activeIndicator) {
+      activeIndicator.classList.replace('bg-transparent', 'bg-[#9d3d26]');
+    }
+
+    if (tabName !== 'pass') {
+      showToast(`Switched view to ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+    }
+  }
+</script>
+</body></html>
