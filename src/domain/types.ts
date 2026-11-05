@@ -46,7 +46,6 @@ export type LedgerEntry = {
   idempotencyKey?: string;
   kind: LedgerEntryKind;
   amountCents: number; // positive for topup/bonus/refund, negative for debit
-  amountCredits: number; // euro/credits representation for backwards-compatibility (amountCents / 100)
   resultingBalanceCents: number;
   createdAt: string; // ISO 8601
   label: string;
@@ -54,12 +53,11 @@ export type LedgerEntry = {
   reference: string;
   paymentMode?: 'wallet' | 'card' | 'qr';
   meta?: Record<string, unknown>;
-  bonusCredits?: number;
+  bonusCents?: number;
 };
 
 export type Wallet = {
-  balanceCents: number; // Integer cents (primary truth)
-  balanceCredits: number; // balanceCents / 100
+  balanceCents: number; // Integer cents (only stored balance representation)
   entries: LedgerEntry[];
 };
 
@@ -69,7 +67,7 @@ export type BookingGuardResult = {
   allowed: boolean;
   reason?: BookingGuardReason;
   shortfallCents: number;
-  shortfall: number; // in euro/credits for backwards compatibility
+  shortfall?: number;
   messageEn?: string;
   messageEl?: string;
 };

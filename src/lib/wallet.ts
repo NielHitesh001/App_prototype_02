@@ -1,27 +1,42 @@
 import type {
   BookingGuardResult,
   LedgerEntry,
+  LedgerEntryKind,
   Wallet
 } from '../domain/types';
 import {
   calculateBonusCents,
-  centsToEuro,
-  euro,
   formatCents,
-  MAX_WALLET_BALANCE_CENTS
+  MAX_WALLET_BALANCE_CENTS,
+  validateAmount
 } from './money';
 
 /**
- * Creates a unique reference number formatted as TR-XXXX.
+ * Generates a unique, non-colliding reference string (P0-8).
+ * Uses a cryptographically secure random UUID suffix (8 hex characters)
+ * and verifies uniqueness against any existing wallet ledger entries.
  */
-export function generateReference(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return `TR-${num}`;
+export function generateReference(wallet?: Wallet): string {
+  const makeRef = () => `TR-${crypto.randomUUID().replace(/-/g, '').slice(-8).toUpperCase()}`;
+
+  let ref = makeRef();
+  if (wallet) {
+    let attempts = 0;
+    while (wallet.entries.some(e => e.reference === ref)) {
+      ref = makeRef();
+      attempts++;
+      if (attempts > 50) {
+        ref = `TR-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(-4).toUpperCase()}`;
+        break;
+      }
+    }
+  }
+  return ref;
 }
 
 /**
- * Verifies the fundamental financial invariant:
- * Wallet balance MUST equal the sum of all ledger entries.
+ * Invariant Checker:
+ * Verifies that the wallet's balanceCents strictly equals the sum of all its ledger entry amountCents.
  */
 export function verifyWalletInvariant(wallet: Wallet): boolean {
   const sumCents = wallet.entries.reduce((acc, entry) => acc + entry.amountCents, 0);
@@ -34,8 +49,9 @@ export function verifyWalletInvariant(wallet: Wallet): boolean {
  */
 export function debit(
   wallet: Wallet,
-  entry: Omit<LedgerEntry, 'resultingBalanceCents' | 'amountCredits'> & {
+  entry: Omit<LedgerEntry, 'resultingBalanceCents'> & {
     amountCents: number;
+    kind: 'booking';
   }
 ): Wallet {
   const debitCents = Math.abs(entry.amountCents);
@@ -58,21 +74,17 @@ export function debit(
   const resultingBalanceCents = wallet.balanceCents - debitCents;
   const fullEntry: LedgerEntry = {
     ...entry,
-    kind: entry.kind || 'booking',
+    kind: entry.kind,
     amountCents: -debitCents,
-    amountCredits: -centsToEuro(debitCents),
     resultingBalanceCents,
     createdAt: entry.createdAt || new Date().toISOString(),
-    reference: entry.reference || generateReference()
+    reference: entry.reference || generateReference(wallet)
   };
 
-  const updatedWallet: Wallet = {
+  return {
     balanceCents: resultingBalanceCents,
-    balanceCredits: centsToEuro(resultingBalanceCents),
     entries: [fullEntry, ...wallet.entries]
   };
-
-  return updatedWallet;
 }
 
 /**
@@ -81,8 +93,9 @@ export function debit(
  */
 export function credit(
   wallet: Wallet,
-  entry: Omit<LedgerEntry, 'resultingBalanceCents' | 'amountCredits'> & {
+  entry: Omit<LedgerEntry, 'resultingBalanceCents'> & {
     amountCents: number;
+    kind: LedgerEntryKind;
   }
 ): Wallet {
   const creditCents = Math.abs(entry.amountCents);
@@ -105,27 +118,24 @@ export function credit(
   const resultingBalanceCents = wallet.balanceCents + creditCents;
   const fullEntry: LedgerEntry = {
     ...entry,
-    kind: entry.kind || 'topup',
+    kind: entry.kind,
     amountCents: creditCents,
-    amountCredits: centsToEuro(creditCents),
     resultingBalanceCents,
     createdAt: entry.createdAt || new Date().toISOString(),
-    reference: entry.reference || generateReference()
+    reference: entry.reference || generateReference(wallet)
   };
 
-  const updatedWallet: Wallet = {
+  return {
     balanceCents: resultingBalanceCents,
-    balanceCredits: centsToEuro(resultingBalanceCents),
     entries: [fullEntry, ...wallet.entries]
   };
-
-  return updatedWallet;
 }
 
 /**
  * Processes a top-up with the 10% bonus rule.
- * Crucial Rule: The 10% bonus is recorded as a SEPARATE ledger entry labeled as bonus,
- * keeping accounting honest and itemized.
+ *
+ * P0-4: Checks both base key and bonus key upfront. Returns both entries on replay.
+ * P0-5: Max balance check is ATOMIC across top-up + bonus before any entry is created.
  */
 export function processTopupWithBonus(
   wallet: Wallet,
@@ -141,26 +151,53 @@ export function processTopupWithBonus(
   topupEntry: LedgerEntry;
   bonusEntry?: LedgerEntry;
 } {
-  if (topupAmountCents <= 0) {
-    throw new Error('Top-up amount must be strictly positive');
+  // Validate top-up bounds
+  const validation = validateAmount(topupAmountCents, 'topup');
+  if (!validation.valid) {
+    throw new Error(validation.error);
   }
 
-  // Check idempotency upfront
-  if (
-    options?.idempotencyKey &&
-    wallet.entries.some(e => e.idempotencyKey === options.idempotencyKey)
-  ) {
-    const existing = wallet.entries.find(e => e.idempotencyKey === options.idempotencyKey)!;
-    return { wallet, topupEntry: existing };
+  const baseKey = options?.idempotencyKey;
+  const bonusKey = baseKey ? `${baseKey}-bonus` : undefined;
+
+  // P0-4: Upfront idempotency check for both entries
+  if (baseKey) {
+    const existingTopup = wallet.entries.find(e => e.idempotencyKey === baseKey);
+    const existingBonus = wallet.entries.find(e => e.idempotencyKey === bonusKey);
+
+    if (existingTopup) {
+      const bonusExpected = calculateBonusCents(topupAmountCents, 10) > 0;
+      if (bonusExpected && !existingBonus) {
+        throw new Error(
+          `Corrupted transaction state: topup entry exists for key "${baseKey}" but associated bonus entry is missing.`
+        );
+      }
+      return {
+        wallet,
+        topupEntry: existingTopup,
+        bonusEntry: existingBonus
+      };
+    }
+  }
+
+  // P1-1: Integer bonus calculation
+  const bonusCents = calculateBonusCents(topupAmountCents, 10);
+  const totalAdditionCents = topupAmountCents + bonusCents;
+
+  // P0-5: Atomic max-balance check before any entry is created
+  if (wallet.balanceCents + totalAdditionCents > MAX_WALLET_BALANCE_CENTS) {
+    throw new Error(
+      `Top-up of ${formatCents(topupAmountCents)} plus bonus of ${formatCents(bonusCents)} (${formatCents(totalAdditionCents)}) exceeds maximum wallet limit of ${formatCents(MAX_WALLET_BALANCE_CENTS)}`
+    );
   }
 
   const createdAt = options?.createdAt || new Date().toISOString();
-  const topupRef = generateReference();
+  const topupRef = generateReference(wallet);
 
   // 1. Credit base top-up
   const topupEntryData = {
     id: crypto.randomUUID(),
-    idempotencyKey: options?.idempotencyKey,
+    idempotencyKey: baseKey,
     kind: 'topup' as const,
     amountCents: topupAmountCents,
     createdAt,
@@ -173,14 +210,12 @@ export function processTopupWithBonus(
   let currentWallet = credit(wallet, topupEntryData);
   const createdTopupEntry = currentWallet.entries[0];
 
-  // 2. Calculate 10% bonus using Round-Half-Up
-  const bonusCents = calculateBonusCents(topupAmountCents, 0.1);
+  // 2. Credit 10% bonus as separate ledger entry
   let createdBonusEntry: LedgerEntry | undefined;
-
   if (bonusCents > 0) {
     const bonusEntryData = {
       id: crypto.randomUUID(),
-      idempotencyKey: options?.idempotencyKey ? `${options.idempotencyKey}-bonus` : undefined,
+      idempotencyKey: bonusKey,
       kind: 'bonus' as const,
       amountCents: bonusCents,
       createdAt,
@@ -188,7 +223,7 @@ export function processTopupWithBonus(
       labelEl: 'Bonus 10% φόρτισης πορτοφολιού',
       reference: `${topupRef}-BONUS`,
       paymentMode: 'wallet' as const,
-      bonusCredits: centsToEuro(bonusCents)
+      bonusCents
     };
 
     currentWallet = credit(currentWallet, bonusEntryData);
@@ -204,14 +239,28 @@ export function processTopupWithBonus(
 
 /**
  * Processes a refund for a previously settled booking entry.
- * Reverses the amount without mutating or deleting the historical record.
+ *
+ * P0-1: Tracks cumulative refunded amounts per booking; rejects if sum > original charge.
+ * P0-2: Explicit check: refundAmountCents === undefined refunds remaining balance. 0 or invalid throws.
+ * P0-3: Supports idempotencyKey to prevent duplicate refunds.
  */
 export function processRefund(
   wallet: Wallet,
   bookingEntryId: string,
   refundAmountCents?: number,
-  options?: { reason?: string }
+  options?: {
+    idempotencyKey?: string;
+    reason?: string;
+  }
 ): Wallet {
+  // P0-3: Idempotency check
+  if (
+    options?.idempotencyKey &&
+    wallet.entries.some(e => e.idempotencyKey === options.idempotencyKey)
+  ) {
+    return wallet;
+  }
+
   const original = wallet.entries.find(e => e.id === bookingEntryId);
   if (!original) {
     throw new Error(`Transaction entry not found: ${bookingEntryId}`);
@@ -221,76 +270,101 @@ export function processRefund(
     throw new Error(`Cannot refund entry of kind: ${original.kind}`);
   }
 
-  const maxRefundable = Math.abs(original.amountCents);
-  const amountToRefund = refundAmountCents ? Math.abs(refundAmountCents) : maxRefundable;
+  const originalChargeCents = Math.abs(original.amountCents);
 
-  if (amountToRefund <= 0 || amountToRefund > maxRefundable) {
+  // P0-1: Sum all previous refunds for this booking
+  const alreadyRefundedCents = wallet.entries
+    .filter(e => e.kind === 'refund' && e.meta?.originalEntryId === bookingEntryId)
+    .reduce((sum, e) => sum + e.amountCents, 0);
+
+  const remainingRefundableCents = originalChargeCents - alreadyRefundedCents;
+
+  if (remainingRefundableCents <= 0) {
     throw new Error(
-      `Refund amount of ${formatCents(amountToRefund)} exceeds original booking charge of ${formatCents(maxRefundable)}`
+      `Booking ${bookingEntryId} has already been fully refunded (€${(originalChargeCents / 100).toFixed(2)} refunded).`
+    );
+  }
+
+  // P0-2: Explicit refund amount determination
+  let amountToRefundCents: number;
+  if (refundAmountCents === undefined) {
+    amountToRefundCents = remainingRefundableCents;
+  } else {
+    if (!Number.isInteger(refundAmountCents) || refundAmountCents <= 0) {
+      throw new Error(
+        `Refund amount must be a positive integer in cents, received: ${refundAmountCents}`
+      );
+    }
+    amountToRefundCents = refundAmountCents;
+  }
+
+  // P0-1: Reject if requested exceeds remaining refundable amount
+  if (amountToRefundCents > remainingRefundableCents) {
+    throw new Error(
+      `Refund amount of ${formatCents(amountToRefundCents)} exceeds remaining refundable amount of ${formatCents(remainingRefundableCents)}.`
     );
   }
 
   const refundEntryData = {
     id: crypto.randomUUID(),
+    idempotencyKey: options?.idempotencyKey,
     kind: 'refund' as const,
-    amountCents: amountToRefund,
+    amountCents: amountToRefundCents,
     createdAt: new Date().toISOString(),
     label: `Refund: ${original.label}`,
     labelEl: `Επιστροφή: ${original.label}`,
     reference: `${original.reference}-REFUND`,
-    meta: { originalEntryId: original.id, reason: options?.reason }
+    paymentMode: 'wallet' as const,
+    meta: {
+      originalEntryId: original.id,
+      reason: options?.reason,
+      remainingAfterThisRefundCents: remainingRefundableCents - amountToRefundCents
+    }
   };
 
   return credit(wallet, refundEntryData);
 }
 
 /**
- * Booking Guard: Validates whether a reservation can proceed.
+ * Booking Guard (P1-4, P1-5):
  *
  * Rules:
- * 1. Guests: strictly integer between 1 and 4. Values <= 0, > 4, or decimals are rejected.
- * 2. Total cost: unit price * guests.
- * 3. Exact balance: passes (e.g. balance €20, total €20 -> allowed: true).
- * 4. Insufficient balance: blocked, calculates exact shortfall in euros and cents.
- * 5. Non-wallet payment: if paying by card or cash, wallet balance is not checked.
- * 6. Generates bilingual messages in English and Greek.
+ * 1. Units: Strictly integer cents for balanceCents and totalCents. No float or isCents option.
+ * 2. Guests: REQUIRED in options. Must be an integer between 1 and 4.
+ * 3. Payment method: Card/cash bypasses wallet balance check.
+ * 4. Exact balance: Allowed (totalCents <= balanceCents).
+ * 5. Shortfall: Calculated as totalCents - balanceCents.
  */
 export function canBook(
-  balanceCreditsOrCents: number,
-  totalCreditsOrCents: number,
-  options?: {
-    guests?: number;
+  balanceCents: number,
+  totalCents: number,
+  options: {
+    guests: number;
     paymentMethod?: 'wallet' | 'card' | 'qr' | 'cash';
-    isCents?: boolean;
   }
 ): BookingGuardResult {
-  const isCents = options?.isCents ?? false;
-  const balanceCents = isCents
-    ? Math.round(balanceCreditsOrCents)
-    : Math.round(balanceCreditsOrCents * 100);
-
-  const totalCents = isCents
-    ? Math.round(totalCreditsOrCents)
-    : Math.round(totalCreditsOrCents * 100);
-
-  const guests = options?.guests;
-  const paymentMethod = options?.paymentMethod ?? 'wallet';
-
-  // 1. Validate Guest limits (1 to 4)
-  if (guests !== undefined) {
-    if (!Number.isInteger(guests) || guests < 1 || guests > 4) {
-      return {
-        allowed: false,
-        reason: 'guests_out_of_range',
-        shortfallCents: 0,
-        shortfall: 0,
-        messageEn: 'Guests must be between 1 and 4 guests.',
-        messageEl: 'Ο αριθμός επισκεπτών πρέπει να είναι μεταξύ 1 και 4.'
-      };
-    }
+  if (!Number.isInteger(balanceCents) || balanceCents < 0) {
+    throw new Error(`Invalid balance in cents: ${balanceCents}`);
+  }
+  if (!Number.isInteger(totalCents) || totalCents < 0) {
+    throw new Error(`Invalid total in cents: ${totalCents}`);
   }
 
-  // 2. Non-wallet payment bypasses balance check
+  const { guests, paymentMethod = 'wallet' } = options;
+
+  // P1-5: Validate required guest limits (1 to 4)
+  if (!Number.isInteger(guests) || guests < 1 || guests > 4) {
+    return {
+      allowed: false,
+      reason: 'guests_out_of_range',
+      shortfallCents: 0,
+      shortfall: 0,
+      messageEn: 'Guests must be between 1 and 4 guests.',
+      messageEl: 'Ο αριθμός επισκεπτών πρέπει να είναι μεταξύ 1 και 4.'
+    };
+  }
+
+  // Non-wallet payments bypass balance check
   if (paymentMethod !== 'wallet') {
     return {
       allowed: true,
@@ -299,7 +373,7 @@ export function canBook(
     };
   }
 
-  // 3. Exact balance or sufficient balance
+  // Exact balance or sufficient funds
   if (totalCents <= balanceCents) {
     return {
       allowed: true,
@@ -308,20 +382,17 @@ export function canBook(
     };
   }
 
-  // 4. Insufficient balance shortfall calculation
+  // Insufficient balance shortfall calculation
   const shortfallCents = totalCents - balanceCents;
-  const shortfallEur = centsToEuro(shortfallCents);
-  const totalEur = centsToEuro(totalCents);
-  const balanceEur = centsToEuro(balanceCents);
 
-  const messageEn = `This needs ${euro(totalEur)}. You have ${euro(balanceEur)}. Top up ${euro(shortfallEur)} to continue.`;
-  const messageEl = `Απαιτούνται ${euro(totalEur, 'el-CY')}. Έχετε ${euro(balanceEur, 'el-CY')}. Συμπληρώστε ${euro(shortfallEur, 'el-CY')} για να συνεχίσετε.`;
+  const messageEn = `This needs ${formatCents(totalCents)}. You have ${formatCents(balanceCents)}. Top up ${formatCents(shortfallCents)} to continue.`;
+  const messageEl = `Απαιτούνται ${formatCents(totalCents, 'el-CY')}. Έχετε ${formatCents(balanceCents, 'el-CY')}. Συμπληρώστε ${formatCents(shortfallCents, 'el-CY')} για να συνεχίσετε.`;
 
   return {
     allowed: false,
     reason: 'insufficient_balance',
     shortfallCents,
-    shortfall: shortfallEur,
+    shortfall: shortfallCents,
     messageEn,
     messageEl
   };

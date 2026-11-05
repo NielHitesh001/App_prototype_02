@@ -80,7 +80,7 @@ describe('2. Money Handling & Rounding', () => {
 
 describe('3. Wallet & Bonus Operations', () => {
   it('test 2: bonus — €25, €50, and €100 top-ups produce €2.50, €5.00, and €10.00 bonuses as separate ledger entries without duplication', () => {
-    const emptyWallet: Wallet = { balanceCents: 0, balanceCredits: 0, entries: [] };
+    const emptyWallet: Wallet = { balanceCents: 0, entries: [] };
 
     // €25 top-up (2,500 cents)
     const res25 = processTopupWithBonus(emptyWallet, 2500, { idempotencyKey: 'key-25' });
@@ -106,7 +106,7 @@ describe('3. Wallet & Bonus Operations', () => {
   });
 
   it('test 6: double-submit — calling top-up or booking twice with the same idempotency key changes the balance once', () => {
-    const emptyWallet: Wallet = { balanceCents: 10000, balanceCredits: 100, entries: [] };
+    const emptyWallet: Wallet = { balanceCents: 10000, entries: [] };
     const idempotencyKey = 'unique-submission-token-123';
 
     // First top-up
@@ -146,7 +146,7 @@ describe('3. Wallet & Bonus Operations', () => {
   });
 
   it('test 7: invariant — after any sequence of operations, balance equals the sum of the ledger', () => {
-    let wallet: Wallet = { balanceCents: 0, balanceCredits: 0, entries: [] };
+    let wallet: Wallet = { balanceCents: 0, entries: [] };
     expect(verifyWalletInvariant(wallet)).toBe(true);
 
     // Operation 1: Top up €25 (+ bonus €2.50)
@@ -178,7 +178,7 @@ describe('3. Wallet & Bonus Operations', () => {
   });
 
   it('rejects debits that would drive balance below zero', () => {
-    const wallet: Wallet = { balanceCents: 2000, balanceCredits: 20, entries: [] };
+    const wallet: Wallet = { balanceCents: 2000, entries: [] };
     expect(() =>
       debit(wallet, {
         id: 'over',
@@ -215,34 +215,34 @@ describe('4. Booking Guard (`canBook`)', () => {
 
   it('test 5: exact balance passes; balance minus one cent fails with a one-cent shortfall', () => {
     // Exact balance €20.00 with €20.00 cost must pass
-    const exact = canBook(2000, 2000, { isCents: true });
+    const exact = canBook(2000, 2000, { guests: 2 });
     expect(exact.allowed).toBe(true);
     expect(exact.shortfallCents).toBe(0);
 
     // Balance €19.99 with €20.00 cost must fail with €0.01 shortfall
-    const shortfallOneCent = canBook(1999, 2000, { isCents: true });
+    const shortfallOneCent = canBook(1999, 2000, { guests: 2 });
     expect(shortfallOneCent.allowed).toBe(false);
     expect(shortfallOneCent.reason).toBe('insufficient_balance');
     expect(shortfallOneCent.shortfallCents).toBe(1);
-    expect(shortfallOneCent.shortfall).toBe(0.01);
     expect(shortfallOneCent.messageEn).toMatch(/This needs €20.00\. You have €19.99\. Top up €0.01 to continue\./);
     expect(shortfallOneCent.messageEl).toContain('Απαιτούνται');
   });
 
   it('checks total cost for all guests, not just price per person', () => {
     // €32 per guest x 4 guests = €128. Balance is €100.
-    const perGuestPrice = 32;
+    const perGuestCents = 3200;
     const guests = 4;
-    const totalCost = perGuestPrice * guests; // 128
+    const totalCostCents = perGuestCents * guests; // 12800 cents (€128)
+    const balanceCents = 10000; // €100
 
-    const guard = canBook(100, totalCost, { guests });
+    const guard = canBook(balanceCents, totalCostCents, { guests });
     expect(guard.allowed).toBe(false);
-    expect(guard.shortfall).toBe(28); // 128 - 100 = 28
+    expect(guard.shortfallCents).toBe(2800); // 12800 - 10000 = 2800 cents (€28)
   });
 
   it('bypasses wallet balance check when paying by card or external method', () => {
     // Wallet has €0 balance, but customer chooses card payment
-    const cardBooking = canBook(0, 100, { guests: 2, paymentMethod: 'card' });
+    const cardBooking = canBook(0, 10000, { guests: 2, paymentMethod: 'card' });
     expect(cardBooking.allowed).toBe(true);
     expect(cardBooking.shortfallCents).toBe(0);
   });
@@ -250,7 +250,7 @@ describe('4. Booking Guard (`canBook`)', () => {
 
 describe('5. Receipts, Ledger & Refunds', () => {
   it('test 8: receipt round-trip — the receipt total matches the ledger entry it references', () => {
-    const initial: Wallet = { balanceCents: 5000, balanceCredits: 50, entries: [] };
+    const initial: Wallet = { balanceCents: 5000, entries: [] };
     const chargeCents = 3500; // €35.00
     const chargeRef = 'TR-ROUNDTRIP';
 
@@ -278,7 +278,7 @@ describe('5. Receipts, Ledger & Refunds', () => {
   });
 
   it('refunds cannot exceed the original booking amount and preserve historical record', () => {
-    const initial: Wallet = { balanceCents: 10000, balanceCredits: 100, entries: [] };
+    const initial: Wallet = { balanceCents: 10000, entries: [] };
     const booked = debit(initial, {
       id: 'booking-to-refund',
       kind: 'booking',
@@ -296,6 +296,6 @@ describe('5. Receipts, Ledger & Refunds', () => {
     expect(refunded.entries[0].amountCents).toBe(2500);
 
     // Reject refund exceeding original €40
-    expect(() => processRefund(booked, 'booking-to-refund', 4001)).toThrow(/exceeds original/);
+    expect(() => processRefund(booked, 'booking-to-refund', 4001)).toThrow(/exceeds remaining refundable amount/);
   });
 });

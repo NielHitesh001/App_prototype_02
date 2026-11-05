@@ -24,7 +24,7 @@ import {
 import type { Event, Venue } from '../domain/types';
 import { deals, events, menuItems, venues } from '../fixtures/data';
 import { currentSeasonLabel, eventDate, eventTime, isThisWeek, longDate } from '../lib/dates';
-import { euro } from '../lib/money';
+import { calculateBonusCents, euro, euroToCents, formatCents } from '../lib/money';
 import { canBook } from '../lib/wallet';
 import { useStore } from '../store/app-store';
 
@@ -97,10 +97,10 @@ function Shell({ children }: { children: ReactNode }) {
         <Link
           className="balance-chip"
           to="/pass"
-          aria-label={`Wallet balance ${euro(wallet.balanceCredits)}`}
+          aria-label={`Wallet balance ${formatCents(wallet.balanceCents)}`}
         >
           <WalletCards size={17} aria-hidden="true" />
-          <span>{euro(wallet.balanceCredits)}</span>
+          <span>{formatCents(wallet.balanceCents)}</span>
         </Link>
         <button className="profile" aria-label="JD profile account">
           <span>JD</span>
@@ -195,9 +195,12 @@ function BookingSheet({
   const [method, setMethod] = useState<'wallet' | 'card' | 'qr'>('wallet');
   const [status, setStatus] = useState<'idle' | 'error'>('idle');
 
-  const unitPrice = price ?? 0;
-  const total = unitPrice * guests;
-  const guard = canBook(wallet.balanceCredits, total);
+  const unitPriceCents = price !== null ? euroToCents(price) : 0;
+  const totalCents = unitPriceCents * guests;
+  const guard = canBook(wallet.balanceCents, totalCents, {
+    guests,
+    paymentMethod: method
+  });
 
   const confirm = () => {
     if (price === null) {
@@ -223,7 +226,12 @@ function BookingSheet({
         setStatus('error');
         return;
       }
-      addDebit(total, `Booking: ${title} (${guests} ${guests === 1 ? 'guest' : 'guests'})`);
+      addDebit(
+        totalCents,
+        `Booking: ${title} (${guests} ${guests === 1 ? 'guest' : 'guests'})`,
+        undefined,
+        true
+      );
       if (venueId) {
         addTableBooking({
           venueId,
@@ -310,7 +318,7 @@ function BookingSheet({
 
           <div className="total">
             <span>Total amount</span>
-            <strong>{euro(total)}</strong>
+            <strong>{formatCents(totalCents)}</strong>
           </div>
 
           {method === 'qr' && (
@@ -322,8 +330,7 @@ function BookingSheet({
 
           {method === 'wallet' && !guard.allowed && (
             <p className="error" role="alert">
-              This needs {euro(total)}. You have {euro(wallet.balanceCredits)}. Top up{' '}
-              {euro(guard.shortfall)} to continue.
+              {guard.messageEn || `This needs ${formatCents(totalCents)}. You have ${formatCents(wallet.balanceCents)}. Top up ${formatCents(guard.shortfallCents)} to continue.`}
             </p>
           )}
 
@@ -344,7 +351,7 @@ function BookingSheet({
           {price === null
             ? 'Confirm reservation'
             : method === 'wallet'
-              ? `Confirm with ${euro(total)}`
+              ? `Confirm with ${formatCents(totalCents)}`
               : method === 'qr'
                 ? 'Open payment QR'
                 : 'Continue with card'}
@@ -655,7 +662,7 @@ function Kouzina() {
   const handleCheckout = () => {
     const result = checkoutCart(paymentMethod);
     if (!result.success) {
-      setToast(`Needs ${euro(total)}. You have ${euro(wallet.balanceCredits)}.`);
+      setToast(`Needs ${formatCents(euroToCents(total))}. You have ${formatCents(wallet.balanceCents)}.`);
       setTimeout(() => setToast(null), 3000);
       return;
     }
@@ -808,7 +815,7 @@ function Kouzina() {
                 checked={paymentMethod === 'wallet'}
                 onChange={() => setPaymentMethod('wallet')}
               />
-              Pay with wallet credits ({euro(wallet.balanceCredits)} available)
+              Pay with wallet credits ({formatCents(wallet.balanceCents)} available)
             </label>
             <label>
               <input
@@ -821,17 +828,17 @@ function Kouzina() {
             </label>
           </fieldset>
 
-          {paymentMethod === 'wallet' && wallet.balanceCredits < total && (
+          {paymentMethod === 'wallet' && wallet.balanceCents < euroToCents(total) && (
             <p className="error" role="alert">
-              This needs {euro(total)}. You have {euro(wallet.balanceCredits)}. Top up{' '}
-              {euro(total - wallet.balanceCredits)} in your Pass to continue.
+              This needs {euro(total)}. You have {formatCents(wallet.balanceCents)}. Top up{' '}
+              {formatCents(euroToCents(total) - wallet.balanceCents)} in your Pass to continue.
             </p>
           )}
 
           <div className="mt-4">
             <button
               className="primary"
-              disabled={paymentMethod === 'wallet' && wallet.balanceCredits < total}
+              disabled={paymentMethod === 'wallet' && wallet.balanceCents < euroToCents(total)}
               onClick={handleCheckout}
             >
               Confirm and place order ({euro(total)})
@@ -888,7 +895,7 @@ function Pass() {
             {/* Wallet balance hero with display token & high contrast */}
             <article className="wallet-hero">
               <p>Available balance</p>
-              <strong>{euro(wallet.balanceCredits)}</strong>
+              <strong>{formatCents(wallet.balanceCents)}</strong>
               <span>1 credit = €1 · 10% bonus on top-ups</span>
               <div className="hero-actions">
                 <button type="button" onClick={() => setTopupOpen(true)}>
@@ -970,7 +977,7 @@ function Pass() {
                 key={entry.id}
                 type="button"
                 onClick={() => navigate(`/pass/ledger/${entry.id}`)}
-                aria-label={`View receipt for ${entry.label}, ${euro(entry.amountCredits)}`}
+                aria-label={`View receipt for ${entry.label}, ${formatCents(Math.abs(entry.amountCents))}`}
               >
                 <div>
                   <strong>{entry.label}</strong>
@@ -978,9 +985,9 @@ function Pass() {
                     {longDate(entry.createdAt)} · Ref: {entry.reference}
                   </small>
                 </div>
-                <b className={entry.amountCredits < 0 ? 'negative' : ''}>
-                  {entry.amountCredits > 0 ? '+' : ''}
-                  {euro(entry.amountCredits)}
+                <b className={entry.amountCents < 0 ? 'negative' : ''}>
+                  {entry.amountCents > 0 ? '+' : ''}
+                  {formatCents(entry.amountCents)}
                 </b>
               </button>
             ))}
@@ -1028,21 +1035,26 @@ function TopUpModal({
   onSuccess
 }: {
   onClose: () => void;
-  onSuccess: (creditsAdded: number) => void;
+  onSuccess: (creditsAddedCents: number) => void;
 }) {
   const [selectedAmount, setSelectedAmount] = useState(50);
   const [state, setState] = useState<'idle' | 'loading' | 'failure'>('idle');
   const { addTopup } = useStore();
 
-  const bonus = Math.round(selectedAmount * 0.1 * 100) / 100;
-  const totalCredits = selectedAmount + bonus;
+  const topupCents = selectedAmount * 100;
+  const bonusCents = calculateBonusCents(topupCents, 10);
+  const totalCreditsCents = topupCents + bonusCents;
 
   const submit = () => {
     setState('loading');
     setTimeout(() => {
-      addTopup(selectedAmount);
-      onSuccess(totalCredits);
-      onClose();
+      try {
+        addTopup(topupCents, undefined, true);
+        onSuccess(totalCreditsCents);
+        onClose();
+      } catch {
+        setState('failure');
+      }
     }, 600);
   };
 
@@ -1053,22 +1065,26 @@ function TopUpModal({
       </p>
 
       <div className="amounts" role="group" aria-label="Select top-up amount">
-        {[25, 50, 100].map(amount => (
-          <button
-            key={amount}
-            type="button"
-            className={selectedAmount === amount ? 'selected' : ''}
-            onClick={() => setSelectedAmount(amount)}
-          >
-            {euro(amount)}
-            <span className="bonus-pill">+{euro(amount * 0.1)}</span>
-          </button>
-        ))}
+        {[25, 50, 100].map(amount => {
+          const tierCents = amount * 100;
+          const tierBonus = calculateBonusCents(tierCents, 10);
+          return (
+            <button
+              key={amount}
+              type="button"
+              className={selectedAmount === amount ? 'selected' : ''}
+              onClick={() => setSelectedAmount(amount)}
+            >
+              {formatCents(tierCents)}
+              <span className="bonus-pill">+{formatCents(tierBonus)}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="total">
         <span>Credits to receive</span>
-        <strong>{euro(totalCredits)}</strong>
+        <strong>{formatCents(totalCreditsCents)}</strong>
       </div>
 
       {state === 'failure' && (
@@ -1085,7 +1101,7 @@ function TopUpModal({
         >
           {state === 'loading'
             ? 'Processing transaction…'
-            : `Pay ${euro(selectedAmount)} for ${euro(totalCredits)} credits`}
+            : `Pay ${formatCents(topupCents)} for ${formatCents(totalCreditsCents)} credits`}
         </button>
       </div>
     </Dialog>
@@ -1126,9 +1142,9 @@ function Receipt() {
               <dd>{longDate(entry.createdAt)}</dd>
 
               <dt>Amount</dt>
-              <dd className={entry.amountCredits < 0 ? 'text-[#9a4a3a]' : 'text-[#4f5b45]'}>
-                {entry.amountCredits > 0 ? '+' : ''}
-                {euro(entry.amountCredits)}
+              <dd className={entry.amountCents < 0 ? 'text-[#9a4a3a]' : 'text-[#4f5b45]'}>
+                {entry.amountCents > 0 ? '+' : ''}
+                {formatCents(entry.amountCents)}
               </dd>
 
               <dt>Payment method</dt>

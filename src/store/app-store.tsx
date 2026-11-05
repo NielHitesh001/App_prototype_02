@@ -1,22 +1,22 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { CartItem, MenuItem, TableBooking, Wallet } from '../domain/types';
 import { initialTableBookings, initialWallet } from '../fixtures/data';
-import { centsToEuro, euroToCents } from '../lib/money';
+import { euroToCents } from '../lib/money';
 import { debit, generateReference, processTopupWithBonus } from '../lib/wallet';
 
 type StoreContextType = {
   wallet: Wallet;
   saved: Set<string>;
   toggleSaved: (id: string) => void;
-  addDebit: (amountEur: number, label: string, idempotencyKey?: string) => Wallet;
-  addTopup: (amountEur: number, idempotencyKey?: string) => void;
+  addDebit: (amountEurOrCents: number, label: string, idempotencyKey?: string, isCents?: boolean) => Wallet;
+  addTopup: (amountEurOrCents: number, idempotencyKey?: string, isCents?: boolean) => void;
   tableBookings: TableBooking[];
   addTableBooking: (booking: Omit<TableBooking, 'id' | 'status'>) => void;
   cart: CartItem[];
   addToCart: (item: MenuItem) => void;
   updateCartQuantity: (itemId: string, delta: number) => void;
   clearCart: () => void;
-  checkoutCart: (method: 'wallet' | 'card') => { success: boolean; shortfall?: number };
+  checkoutCart: (method: 'wallet' | 'card') => { success: boolean; shortfallCents?: number };
 };
 
 const Ctx = createContext<StoreContextType | null>(null);
@@ -36,8 +36,13 @@ export function AppStore({ children }: { children: ReactNode }) {
     });
   };
 
-  const addDebit = (amountEur: number, label: string, idempotencyKey?: string): Wallet => {
-    const amountCents = euroToCents(amountEur);
+  const addDebit = (
+    amountEurOrCents: number,
+    label: string,
+    idempotencyKey?: string,
+    isCents = false
+  ): Wallet => {
+    const amountCents = isCents ? amountEurOrCents : euroToCents(amountEurOrCents);
     const updated = debit(wallet, {
       id: crypto.randomUUID(),
       idempotencyKey: idempotencyKey || `debit-${Date.now()}`,
@@ -46,15 +51,19 @@ export function AppStore({ children }: { children: ReactNode }) {
       label,
       labelEl: label,
       createdAt: new Date().toISOString(),
-      reference: generateReference(),
+      reference: generateReference(wallet),
       paymentMode: 'wallet'
     });
     setWallet(updated);
     return updated;
   };
 
-  const addTopup = (amountEur: number, idempotencyKey?: string) => {
-    const amountCents = euroToCents(amountEur);
+  const addTopup = (
+    amountEurOrCents: number,
+    idempotencyKey?: string,
+    isCents = false
+  ) => {
+    const amountCents = isCents ? amountEurOrCents : euroToCents(amountEurOrCents);
     const key = idempotencyKey || `topup-${Date.now()}`;
     const result = processTopupWithBonus(wallet, amountCents, {
       idempotencyKey: key,
@@ -62,6 +71,7 @@ export function AppStore({ children }: { children: ReactNode }) {
       labelEl: 'Φόρτιση πορτοφολιού'
     });
     setWallet(result.wallet);
+    return result;
   };
 
   const addTableBooking = (booking: Omit<TableBooking, 'id' | 'status'>) => {
@@ -100,16 +110,19 @@ export function AppStore({ children }: { children: ReactNode }) {
   const clearCart = () => setCart([]);
 
   const checkoutCart = (method: 'wallet' | 'card') => {
-    const subtotal = cart.reduce((sum, c) => sum + c.item.priceEur * c.quantity, 0);
-    const deliveryFee = cart.length > 0 ? Math.max(...cart.map(c => c.item.deliveryFeeEur)) : 0;
-    const totalEur = subtotal + deliveryFee;
-    const totalCents = euroToCents(totalEur);
+    const subtotalCents = cart.reduce(
+      (sum, c) => sum + euroToCents(c.item.priceEur) * c.quantity,
+      0
+    );
+    const deliveryFeeCents =
+      cart.length > 0 ? Math.max(...cart.map(c => euroToCents(c.item.deliveryFeeEur))) : 0;
+    const totalCents = subtotalCents + deliveryFeeCents;
 
     if (method === 'wallet') {
       if (wallet.balanceCents < totalCents) {
-        return { success: false, shortfall: centsToEuro(totalCents - wallet.balanceCents) };
+        return { success: false, shortfallCents: totalCents - wallet.balanceCents };
       }
-      addDebit(totalEur, `Kouzina delivery order (${cart.length} items)`);
+      addDebit(totalCents, `Kouzina delivery order (${cart.length} items)`, undefined, true);
     }
     clearCart();
     return { success: true };
