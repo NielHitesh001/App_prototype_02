@@ -400,4 +400,62 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     expect(res.shortfallCents).toBe(400);
     expect('shortfall' in res).toBe(false);
   });
+
+  it('Deterministic retry test for P0-8: generateReference retries and succeeds when first attempt collides', () => {
+    const collidingUuid = '01234567-89ab-cdef-0123-456789abcdef'; // produces TR-0123456789AB
+    const uniqueUuid = 'fedcba98-7654-3210-fedc-ba9876543210';   // produces TR-FEDCBA987654
+    const walletWithCollision: Wallet = {
+      balanceCents: 0,
+      entries: [
+        {
+          id: 'colliding-entry',
+          kind: 'topup',
+          amountCents: 1000,
+          resultingBalanceCents: 1000,
+          createdAt: new Date().toISOString(),
+          label: 'Colliding',
+          reference: 'TR-0123456789AB'
+        }
+      ]
+    };
+
+    let callCount = 0;
+    const spy = vi.spyOn(crypto, 'randomUUID').mockImplementation(() => {
+      callCount++;
+      return (callCount === 1 ? collidingUuid : uniqueUuid) as `${string}-${string}-${string}-${string}-${string}`;
+    });
+
+    try {
+      const ref = generateReference(walletWithCollision);
+      expect(ref).toBe('TR-FEDCBA987654');
+      expect(callCount).toBe(2);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('Refund cap decision: refunds enforce the €2,000 balance cap and reject over-cap balances', () => {
+    const walletNearCap: Wallet = {
+      balanceCents: 199_000,
+      entries: [
+        {
+          id: 'prior-booking',
+          kind: 'booking',
+          amountCents: -3000,
+          resultingBalanceCents: 199_000,
+          createdAt: new Date().toISOString(),
+          label: 'Pre-ordered tasting',
+          reference: 'TR-PRIOR'
+        }
+      ]
+    };
+
+    // 199,000 + 3,000 = 202,000 cents (€2,020.00), exceeding €2,000 cap
+    expect(() => processRefund(walletNearCap, 'prior-booking', 3000)).toThrow(
+      /Credit exceeds maximum wallet limit of €2,000\.00/
+    );
+
+    // Verify wallet is unchanged
+    expect(walletNearCap.balanceCents).toBe(199_000);
+  });
 });

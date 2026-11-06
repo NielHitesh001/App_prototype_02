@@ -1000,7 +1000,7 @@ function Pass() {
         <TopUpModal
           onClose={() => setTopupOpen(false)}
           onSuccess={added => {
-            setToast(`Added ${euro(added)} credits to your wallet!`);
+            setToast(`Added ${formatCents(added)} credits to your wallet!`);
             setTimeout(() => setToast(null), 3000);
           }}
         />
@@ -1159,7 +1159,7 @@ function Receipt() {
               {entry.resultingBalanceCents !== undefined && (
                 <>
                   <dt>Resulting balance</dt>
-                  <dd>{euro(entry.resultingBalanceCents / 100)}</dd>
+                  <dd>{formatCents(entry.resultingBalanceCents)}</dd>
                 </>
               )}
             </dl>

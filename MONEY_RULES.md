@@ -64,6 +64,9 @@ All transaction limits are enforced by a single validator `validateAmount(cents,
   - If `refundAmountCents` is omitted (`undefined`), the full remaining refundable amount is refunded.
   - If `refundAmountCents` is `0`, negative, or non-integer, an error is thrown.
   - If `refundAmountCents > remainingRefundableCents`, the request is rejected with a clear message stating the remaining refundable balance.
+- **Refund Balance Cap Decision:**
+  - **Rule:** Refunds enforce the `MAX_WALLET_BALANCE_CENTS` (€2,000.00 / 200,000 cents) ceiling. Refunds do **not** bypass the wallet balance cap.
+  - **Rationale:** In compliance with regulatory e-money ceilings, a wallet can never hold more than €2,000.00 under any condition. If a user tops up near the cap, an attempted refund that would cause `wallet.balanceCents + refundAmountCents > MAX_WALLET_BALANCE_CENTS` is rejected atomically before writing to the ledger. Such settlements must be handled out of band.
 
 ---
 
