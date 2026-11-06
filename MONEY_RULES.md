@@ -66,7 +66,12 @@ All transaction limits are enforced by a single validator `validateAmount(cents,
   - If `refundAmountCents > remainingRefundableCents`, the request is rejected with a clear message stating the remaining refundable balance.
 - **Refund Balance Cap Decision:**
   - **Rule:** Refunds enforce the `MAX_WALLET_BALANCE_CENTS` (€2,000.00 / 200,000 cents) ceiling. Refunds do **not** bypass the wallet balance cap.
-  - **Rationale:** In compliance with regulatory e-money ceilings, a wallet can never hold more than €2,000.00 under any condition. If a user tops up near the cap, an attempted refund that would cause `wallet.balanceCents + refundAmountCents > MAX_WALLET_BALANCE_CENTS` is rejected atomically before writing to the ledger. Such settlements must be handled out of band.
+  - **Rationale:** In compliance with regulatory e-money ceilings, a wallet can never hold more than €2,000.00 under any condition. If a user tops up near the cap, an attempted refund that would cause `wallet.balanceCents + refundAmountCents > MAX_WALLET_BALANCE_CENTS` is rejected atomically before writing to the ledger.
+  - **Named Support Role:** Troo Guest Support (`support@troo.cy`) / Operations Desk.
+  - **Support Procedure:** When a refund is rejected because it exceeds the €2,000 wallet limit, the host or guest escalates to Troo Guest Support. Support issues a direct manual payout to the customer's original payment method (card or SEPA bank account) within 2 business days. Once settled, an administrative adjustment entry is logged in the back-office ledger referencing the original booking.
+  - **Customer Rejection Message (Bilingual):**
+    - English (`en`): `Refund exceeds the €2,000 wallet limit. Please contact Troo Guest Support (support@troo.cy) for direct payout.`
+    - Greek (`el`): `Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με την Υποστήριξη (support@troo.cy) για απευθείας πληρωμή.`
 
 ---
 

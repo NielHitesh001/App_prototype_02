@@ -24,7 +24,7 @@ import {
 import type { Event, Venue } from '../domain/types';
 import { deals, events, menuItems, venues } from '../fixtures/data';
 import { currentSeasonLabel, eventDate, eventTime, isThisWeek, longDate } from '../lib/dates';
-import { calculateBonusCents, euro, euroToCents, formatCents } from '../lib/money';
+import { calculateBonusCents, euro, formatCents } from '../lib/money';
 import { canBook } from '../lib/wallet';
 import { useStore } from '../store/app-store';
 
@@ -179,23 +179,23 @@ function Dialog({
 /* Shared Booking Sheet */
 function BookingSheet({
   title,
-  price,
+  priceCents,
   venueId,
   onClose,
   onSuccess
 }: {
   title: string;
-  price: number | null;
+  priceCents: number | null;
   venueId?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }) {
-  const { wallet, addDebit, addTableBooking } = useStore();
+  const { wallet, addDebit, addTopup, addTableBooking } = useStore();
   const [guests, setGuests] = useState(1);
   const [method, setMethod] = useState<'wallet' | 'card' | 'qr'>('wallet');
   const [status, setStatus] = useState<'idle' | 'error'>('idle');
 
-  const unitPriceCents = price !== null ? euroToCents(price) : 0;
+  const unitPriceCents = priceCents !== null ? priceCents : 0;
   const totalCents = unitPriceCents * guests;
   const guard = canBook(wallet.balanceCents, totalCents, {
     guests,
@@ -203,7 +203,7 @@ function BookingSheet({
   });
 
   const confirm = () => {
-    if (price === null) {
+    if (priceCents === null) {
       if (venueId) {
         addTableBooking({
           venueId,
@@ -228,9 +228,7 @@ function BookingSheet({
       }
       addDebit(
         totalCents,
-        `Booking: ${title} (${guests} ${guests === 1 ? 'guest' : 'guests'})`,
-        undefined,
-        true
+        `Booking: ${title} (${guests} ${guests === 1 ? 'guest' : 'guests'})`
       );
       if (venueId) {
         addTableBooking({
@@ -281,7 +279,7 @@ function BookingSheet({
         </button>
       </div>
 
-      {price === null ? (
+      {priceCents === null ? (
         <p className="free mt-4">Free event — no deposit or payment needed.</p>
       ) : (
         <>
@@ -329,9 +327,20 @@ function BookingSheet({
           )}
 
           {method === 'wallet' && !guard.allowed && (
-            <p className="error" role="alert">
-              {guard.messageEn || `This needs ${formatCents(totalCents)}. You have ${formatCents(wallet.balanceCents)}. Top up ${formatCents(guard.shortfallCents)} to continue.`}
-            </p>
+            <div className="mt-2">
+              <p className="error" role="alert">
+                {guard.messageEn || `This needs ${formatCents(totalCents)}. You have ${formatCents(wallet.balanceCents)}. Top up ${formatCents(guard.shortfallCents)} to continue.`}
+              </p>
+              <button
+                type="button"
+                className="secondary mt-2 w-full"
+                onClick={() => {
+                  addTopup(guard.shortfallCents);
+                }}
+              >
+                Top up shortfall ({formatCents(guard.shortfallCents)})
+              </button>
+            </div>
           )}
 
           {status === 'error' && (
@@ -345,10 +354,10 @@ function BookingSheet({
       <div className="mt-6">
         <button
           className="primary"
-          disabled={price !== null && method === 'wallet' && !guard.allowed}
+          disabled={priceCents !== null && method === 'wallet' && !guard.allowed}
           onClick={confirm}
         >
-          {price === null
+          {priceCents === null
             ? 'Confirm reservation'
             : method === 'wallet'
               ? `Confirm with ${formatCents(totalCents)}`
@@ -534,7 +543,7 @@ function Discover() {
       {bookVenue && (
         <BookingSheet
           title={bookVenue.name}
-          price={10}
+          priceCents={1000}
           venueId={bookVenue.id}
           onClose={() => setBookVenue(null)}
           onSuccess={() => {
@@ -628,7 +637,7 @@ function Taste() {
       {bookDish && (
         <BookingSheet
           title={`Dish reservation: ${bookDish}`}
-          price={12}
+          priceCents={1200}
           onClose={() => setBookDish(null)}
           onSuccess={() => {
             setToast(`Reserved ${bookDish}!`);
@@ -655,14 +664,18 @@ function Kouzina() {
     item.description.toLowerCase().includes(search.toLowerCase())
   );
 
-  const subtotal = cart.reduce((sum, c) => sum + c.item.priceEur * c.quantity, 0);
-  const deliveryFee = cart.length > 0 ? Math.max(...cart.map(c => c.item.deliveryFeeEur)) : 0;
-  const total = subtotal + deliveryFee;
+  const subtotalCents = cart.reduce(
+    (sum, c) => sum + (c.item.priceCents ?? Math.round(c.item.priceEur * 100)) * c.quantity,
+    0
+  );
+  const deliveryFeeCents =
+    cart.length > 0 ? Math.max(...cart.map(c => c.item.deliveryFeeCents ?? Math.round(c.item.deliveryFeeEur * 100))) : 0;
+  const totalCents = subtotalCents + deliveryFeeCents;
 
   const handleCheckout = () => {
     const result = checkoutCart(paymentMethod);
     if (!result.success) {
-      setToast(`Needs ${formatCents(euroToCents(total))}. You have ${formatCents(wallet.balanceCents)}.`);
+      setToast(`Needs ${formatCents(totalCents)}. You have ${formatCents(wallet.balanceCents)}.`);
       setTimeout(() => setToast(null), 3000);
       return;
     }
@@ -772,9 +785,9 @@ function Kouzina() {
               <ShoppingBag size={20} aria-hidden="true" />
               <div>
                 <strong className="block text-sm">
-                  {cart.reduce((s, c) => s + c.quantity, 0)} items · {euro(total)}
+                  {cart.reduce((s, c) => s + c.quantity, 0)} items · {formatCents(totalCents)}
                 </strong>
-                <span className="text-xs opacity-90">Delivery fee: {euro(deliveryFee)}</span>
+                <span className="text-xs opacity-90">Delivery fee: {formatCents(deliveryFeeCents)}</span>
               </div>
             </div>
             <button type="button" onClick={() => setCheckoutOpen(true)}>
@@ -793,16 +806,16 @@ function Kouzina() {
                 <span>
                   {c.quantity}x {c.item.name}
                 </span>
-                <strong>{euro(c.item.priceEur * c.quantity)}</strong>
+                <strong>{formatCents((c.item.priceCents ?? Math.round(c.item.priceEur * 100)) * c.quantity)}</strong>
               </div>
             ))}
             <div className="flex justify-between items-center text-sm pt-2 border-t border-[#ebdcd3]">
               <span>Delivery fee</span>
-              <span>{euro(deliveryFee)}</span>
+              <span>{formatCents(deliveryFeeCents)}</span>
             </div>
             <div className="total">
               <span>Total</span>
-              <strong>{euro(total)}</strong>
+              <strong>{formatCents(totalCents)}</strong>
             </div>
           </div>
 
@@ -828,20 +841,20 @@ function Kouzina() {
             </label>
           </fieldset>
 
-          {paymentMethod === 'wallet' && wallet.balanceCents < euroToCents(total) && (
+          {paymentMethod === 'wallet' && wallet.balanceCents < totalCents && (
             <p className="error" role="alert">
-              This needs {euro(total)}. You have {formatCents(wallet.balanceCents)}. Top up{' '}
-              {formatCents(euroToCents(total) - wallet.balanceCents)} in your Pass to continue.
+              This needs {formatCents(totalCents)}. You have {formatCents(wallet.balanceCents)}. Top up{' '}
+              {formatCents(totalCents - wallet.balanceCents)} in your Pass to continue.
             </p>
           )}
 
           <div className="mt-4">
             <button
               className="primary"
-              disabled={paymentMethod === 'wallet' && wallet.balanceCents < euroToCents(total)}
+              disabled={paymentMethod === 'wallet' && wallet.balanceCents < totalCents}
               onClick={handleCheckout}
             >
-              Confirm and place order ({euro(total)})
+              Confirm and place order ({formatCents(totalCents)})
             </button>
           </div>
         </Dialog>
@@ -1037,23 +1050,44 @@ function TopUpModal({
   onClose: () => void;
   onSuccess: (creditsAddedCents: number) => void;
 }) {
-  const [selectedAmount, setSelectedAmount] = useState(50);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
+  const [customAmount, setCustomAmount] = useState<string>('');
   const [state, setState] = useState<'idle' | 'loading' | 'failure'>('idle');
-  const { addTopup } = useStore();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { addTopup, wallet } = useStore();
 
-  const topupCents = selectedAmount * 100;
+  let topupCents = 0;
+  if (selectedAmount !== null) {
+    topupCents = selectedAmount * 100;
+  } else {
+    const val = parseFloat(customAmount);
+    if (Number.isFinite(val) && val > 0) {
+      topupCents = Math.round(val * 100);
+    }
+  }
+
   const bonusCents = calculateBonusCents(topupCents, 10);
   const totalCreditsCents = topupCents + bonusCents;
 
   const submit = () => {
+    if (topupCents <= 0) return;
+    if (wallet.balanceCents + totalCreditsCents > 200_000) {
+      setState('failure');
+      setErrorMessage('Top-up would exceed maximum wallet limit of €2,000.00.');
+      return;
+    }
     setState('loading');
+    setErrorMessage(null);
     setTimeout(() => {
       try {
-        addTopup(topupCents, undefined, true);
+        addTopup(topupCents);
         onSuccess(totalCreditsCents);
         onClose();
-      } catch {
+      } catch (err: unknown) {
         setState('failure');
+        setErrorMessage(
+          err instanceof Error ? err.message : 'Top-up failed. Please check your payment details and retry.'
+        );
       }
     }, 600);
   };
@@ -1073,13 +1107,36 @@ function TopUpModal({
               key={amount}
               type="button"
               className={selectedAmount === amount ? 'selected' : ''}
-              onClick={() => setSelectedAmount(amount)}
+              onClick={() => {
+                setSelectedAmount(amount);
+                setCustomAmount('');
+              }}
             >
               {formatCents(tierCents)}
               <span className="bonus-pill">+{formatCents(tierBonus)}</span>
             </button>
           );
         })}
+      </div>
+
+      <div className="mt-3">
+        <label htmlFor="custom-topup-input" className="block text-xs font-semibold mb-1 text-[#5a483a]">
+          Or custom amount (€):
+        </label>
+        <input
+          id="custom-topup-input"
+          type="number"
+          step="0.01"
+          min="1"
+          max="500"
+          placeholder="e.g. 20.50"
+          value={customAmount}
+          onChange={e => {
+            setCustomAmount(e.target.value);
+            setSelectedAmount(null);
+          }}
+          className="w-full px-3 py-2 border border-[#d6c7b2] rounded text-sm"
+        />
       </div>
 
       <div className="total">
@@ -1089,14 +1146,14 @@ function TopUpModal({
 
       {state === 'failure' && (
         <p className="error" role="alert">
-          Top-up failed. Please check your payment details and retry.
+          {errorMessage || 'Top-up failed. Please check your payment details and retry.'}
         </p>
       )}
 
       <div className="mt-4">
         <button
           className="primary"
-          disabled={state === 'loading'}
+          disabled={state === 'loading' || topupCents <= 0}
           onClick={submit}
         >
           {state === 'loading'
@@ -1111,10 +1168,72 @@ function TopUpModal({
 /* Receipt Subpage */
 function Receipt() {
   const { id } = useParams();
-  const { wallet } = useStore();
+  const { wallet, requestRefund } = useStore();
   const navigate = useNavigate();
 
+  const [refundAmountStr, setRefundAmountStr] = useState('');
+  const [refundStatus, setRefundStatus] = useState<{
+    type: 'idle' | 'success' | 'error';
+    messageEn?: string;
+    messageEl?: string;
+  }>({ type: 'idle' });
+
   const entry = wallet.entries.find(e => e.id === id);
+
+  if (!entry) {
+    return (
+      <Shell>
+        <section className="page">
+          <button
+            type="button"
+            className="back"
+            onClick={() => navigate(-1)}
+            aria-label="Back to pass"
+          >
+            <ChevronLeft aria-hidden="true" size={18} /> Back
+          </button>
+          <div className="empty">
+            <h2>Receipt not found</h2>
+            <p>This transaction could not be located in your local session ledger.</p>
+            <button className="secondary" onClick={() => navigate('/pass')}>
+              Return to Pass
+            </button>
+          </div>
+        </section>
+      </Shell>
+    );
+  }
+
+  const originalChargeCents = Math.abs(entry.amountCents);
+  const alreadyRefundedCents = wallet.entries
+    .filter(e => e.kind === 'refund' && e.meta?.originalEntryId === entry.id)
+    .reduce((sum, e) => sum + e.amountCents, 0);
+  const remainingRefundableCents = originalChargeCents - alreadyRefundedCents;
+
+  const handleRefund = (centsToRefund?: number) => {
+    setRefundStatus({ type: 'idle' });
+    let amountCents = centsToRefund;
+    if (amountCents === undefined && refundAmountStr.trim()) {
+      const parsed = parseFloat(refundAmountStr.trim());
+      if (Number.isFinite(parsed) && parsed > 0) {
+        amountCents = Math.round(parsed * 100);
+      }
+    }
+    const res = requestRefund(entry.id, amountCents);
+    if (res.success) {
+      setRefundStatus({
+        type: 'success',
+        messageEn: 'Refund issued successfully.'
+      });
+      setRefundAmountStr('');
+    } else {
+      setRefundStatus({
+        type: 'error',
+        messageEn: res.errorEn,
+        messageEl: res.errorEl
+      });
+    }
+  };
 
   return (
     <Shell>
@@ -1130,52 +1249,120 @@ function Receipt() {
 
         <h1>Transaction receipt</h1>
 
-        {entry ? (
-          <article className="receipt card">
-            <p className="eyebrow">Reference: {entry.reference}</p>
-            <h2>{entry.label}</h2>
-            {entry.labelEl && (
-              <p className="text-xs text-[#7a6a5a] m-0 mb-3 font-semibold">{entry.labelEl}</p>
-            )}
-            <dl>
-              <dt>Date & time</dt>
-              <dd>{longDate(entry.createdAt)}</dd>
+        <article className="receipt card">
+          <p className="eyebrow">Reference: {entry.reference}</p>
+          <h2>{entry.label}</h2>
+          {entry.labelEl && (
+            <p className="text-xs text-[#7a6a5a] m-0 mb-3 font-semibold">{entry.labelEl}</p>
+          )}
+          <dl>
+            <dt>Date & time</dt>
+            <dd>{longDate(entry.createdAt)}</dd>
 
-              <dt>Amount</dt>
-              <dd className={entry.amountCents < 0 ? 'text-[#9a4a3a]' : 'text-[#4f5b45]'}>
-                {entry.amountCents > 0 ? '+' : ''}
-                {formatCents(entry.amountCents)}
-              </dd>
+            <dt>Amount</dt>
+            <dd className={entry.amountCents < 0 ? 'text-[#9a4a3a]' : 'text-[#4f5b45]'}>
+              {entry.amountCents > 0 ? '+' : ''}
+              {formatCents(entry.amountCents)}
+            </dd>
 
-              <dt>Payment method</dt>
-              <dd>
-                {entry.kind === 'booking'
-                  ? 'Wallet credits'
-                  : entry.kind === 'bonus'
-                    ? 'Promotional bonus'
+            <dt>Payment method</dt>
+            <dd>
+              {entry.kind === 'booking'
+                ? 'Wallet credits'
+                : entry.kind === 'bonus'
+                  ? 'Promotional bonus'
+                  : entry.kind === 'refund'
+                    ? 'Credit refund'
                     : 'Card payment'}
-              </dd>
+            </dd>
 
-              {entry.resultingBalanceCents !== undefined && (
-                <>
-                  <dt>Resulting balance</dt>
-                  <dd>{formatCents(entry.resultingBalanceCents)}</dd>
-                </>
+            {entry.resultingBalanceCents !== undefined && (
+              <>
+                <dt>Resulting balance</dt>
+                <dd>{formatCents(entry.resultingBalanceCents)}</dd>
+              </>
+            )}
+          </dl>
+
+          {entry.kind === 'booking' && (
+            <section
+              className="refund-section mt-6 pt-4 border-t border-[#ebdcd3]"
+              aria-label="Booking refund controls"
+            >
+              <h3 className="text-base font-bold mb-2">Booking refund</h3>
+              <p className="text-sm text-[#5a483a] mb-2">
+                Remaining refundable balance: <strong>{formatCents(remainingRefundableCents)}</strong>
+              </p>
+
+              {refundStatus.type === 'error' && (
+                <div
+                  className="error mb-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800"
+                  role="alert"
+                >
+                  <p className="font-semibold">{refundStatus.messageEn}</p>
+                  {refundStatus.messageEl && refundStatus.messageEl !== refundStatus.messageEn && (
+                    <p className="text-xs mt-1 text-red-700">{refundStatus.messageEl}</p>
+                  )}
+                </div>
               )}
-            </dl>
-            <p className="text-xs text-[#7a6a5a] pt-3 border-t border-[#ebdcd3]">
-              Electronic transaction record issued by Troo Cyprus · Έγκυρη ηλεκτρονική απόδειξη
-            </p>
-          </article>
-        ) : (
-          <div className="empty">
-            <h2>Receipt not found</h2>
-            <p>This transaction could not be located in your local session ledger.</p>
-            <button className="secondary" onClick={() => navigate('/pass')}>
-              Return to Pass
-            </button>
-          </div>
-        )}
+
+              {refundStatus.type === 'success' && (
+                <div
+                  className="mb-3 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800"
+                  role="status"
+                >
+                  <p>{refundStatus.messageEn}</p>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="refund-amount-input" className="block text-xs font-semibold mb-1">
+                    Refund amount (€)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="refund-amount-input"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      placeholder={remainingRefundableCents > 0 ? (remainingRefundableCents / 100).toFixed(2) : '0.00'}
+                      value={refundAmountStr}
+                      onChange={e => setRefundAmountStr(e.target.value)}
+                      className="px-3 py-2 border rounded text-sm flex-1"
+                    />
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => handleRefund()}
+                    >
+                      Issue refund
+                    </button>
+                  </div>
+                </div>
+                {remainingRefundableCents > 0 ? (
+                  <div>
+                    <button
+                      type="button"
+                      className="text-xs underline text-[#9A4A3A]"
+                      onClick={() => handleRefund(remainingRefundableCents)}
+                    >
+                      Refund full remaining {formatCents(remainingRefundableCents)}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-[#7a6a5a] italic">
+                    This booking has been fully refunded ({formatCents(originalChargeCents)} refunded).
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
+          <p className="text-xs text-[#7a6a5a] pt-3 border-t border-[#ebdcd3] mt-4">
+            Electronic transaction record issued by Troo Cyprus · Έγκυρη ηλεκτρονική απόδειξη
+          </p>
+        </article>
       </section>
     </Shell>
   );
@@ -1354,7 +1541,7 @@ function Events() {
       {bookingEvent && (
         <BookingSheet
           title={bookingEvent.title}
-          price={bookingEvent.priceEur}
+          priceCents={bookingEvent.priceCents}
           venueId={bookingEvent.venueId}
           onClose={() => setBookingEvent(null)}
           onSuccess={() => {

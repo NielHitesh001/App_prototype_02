@@ -23,6 +23,7 @@ export type Event = {
   venueId: string;
   startsAt: string; // ISO 8601 with offset e.g. 2026-11-20T19:30:00+02:00
   priceEur: number | null; // null means free
+  priceCents: number | null; // integer cents (single source for calculations)
   capacity: number;
   seatsLeft: number;
   verified: boolean;
@@ -90,9 +91,12 @@ export type MenuItem = {
   description: string;
   venueId: string;
   priceEur: number;
+  priceCents: number;
   deliveryTimeMins: string;
   deliveryFeeEur: number;
+  deliveryFeeCents: number;
   minOrderEur: number;
+  minOrderCents: number;
   image: ImageRef;
 };
 

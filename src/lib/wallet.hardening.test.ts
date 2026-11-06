@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Wallet } from '../domain/types';
 import {
   calculateBonusCents,
+  euro,
   euroToCents,
   validateAmount
 } from './money';
@@ -401,7 +402,7 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     expect('shortfall' in res).toBe(false);
   });
 
-  it('Deterministic retry test for P0-8: generateReference retries and succeeds when first attempt collides', () => {
+  it('P0-8: generateReference retries past a colliding reference and succeeds on unique attempt', () => {
     const collidingUuid = '01234567-89ab-cdef-0123-456789abcdef'; // produces TR-0123456789AB
     const uniqueUuid = 'fedcba98-7654-3210-fedc-ba9876543210';   // produces TR-FEDCBA987654
     const walletWithCollision: Wallet = {
@@ -457,5 +458,14 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
 
     // Verify wallet is unchanged
     expect(walletNearCap.balanceCents).toBe(199_000);
+  });
+
+  it('Step 1: euro() accepts only finite euro amounts and rejects non-finite values', () => {
+    expect(euro(12.5)).toBe('€12.50');
+    expect(euro(0)).toBe('€0.00');
+    expect(euro(48.1)).toBe('€48.10');
+    expect(() => euro(NaN)).toThrow(/euro\(\) received a non-finite amount: NaN/);
+    expect(() => euro(Infinity)).toThrow(/euro\(\) received a non-finite amount: Infinity/);
+    expect(() => euro(-Infinity)).toThrow(/euro\(\) received a non-finite amount: -Infinity/);
   });
 });

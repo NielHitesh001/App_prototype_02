@@ -61,6 +61,36 @@ test.describe('Troo Cyprus Dining — Core User Journeys', () => {
     await page.keyboard.press('Escape');
   });
 
+  test('Step 2: booking for €48.10 with €20.00 balance calculates exact €28.10 shortfall without float rounding errors', async ({ page }) => {
+    // Set wallet balance override to €20.00 (2000 cents)
+    await page.addInitScript(() => {
+      localStorage.setItem('troo_wallet_override_cents', '2000');
+    });
+
+    await page.goto('/events');
+
+    // Click Reserve on the €48.10 Commandaria Cellar Barrel Tasting event
+    const eventCard = page.locator('article', { hasText: 'Commandaria Cellar Barrel Tasting' });
+    await eventCard.getByRole('button', { name: 'Reserve' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    // Verify shortfall alert
+    const errorAlert = dialog.getByRole('alert');
+    await expect(errorAlert).toBeVisible();
+    const alertText = await errorAlert.innerText();
+
+    // Confirm it reads €28.10 and not €28.09 or €28.11
+    expect(alertText).toContain('€28.10');
+    expect(alertText).not.toContain('€28.09');
+    expect(alertText).not.toContain('€28.11');
+
+    // Close dialog
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  });
+
   test('pass wallet tabs toggle and ledger row opens receipt', async ({ page }) => {
     await page.goto('/pass');
 

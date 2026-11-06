@@ -137,10 +137,12 @@ export function formatCents(cents: number, locale: 'en-CY' | 'el-CY' = 'en-CY'):
 }
 
 /**
- * Thin wrapper for backward compatibility across UI components.
- * Calls formatCents under the hood.
+ * Thin wrapper for backward compatibility across UI components displaying euro amounts.
+ * Accepts only finite euro amounts (not integer cents). Calls formatCents under the hood.
  */
-export function euro(amount: number, isCents = false): string {
-  const cents = isCents ? amount : Math.round(amount * 100);
-  return formatCents(cents);
+export function euro(amountEur: number, locale: 'en-CY' | 'el-CY' = 'en-CY'): string {
+  if (!Number.isFinite(amountEur)) {
+    throw new Error(`euro() received a non-finite amount: ${amountEur}`);
+  }
+  return formatCents(Math.round(amountEur * 100), locale);
 }
