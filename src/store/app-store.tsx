@@ -169,9 +169,9 @@ export function AppStore({ children }: { children: ReactNode }) {
         return {
           success: false,
           errorEn:
-            'Refund exceeds the €2,000 wallet limit. Please contact Troo Guest Support (support@troo.cy) for direct payout.',
+            'Refund exceeds the €2,000 wallet limit. Please contact [PLACEHOLDER: support email — replace before pilot launch] for direct payout.',
           errorEl:
-            'Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με την Υποστήριξη (support@troo.cy) για απευθείας πληρωμή.'
+            'Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με [PLACEHOLDER: support email — replace before pilot launch] για απευθείας πληρωμή.'
         };
       }
       return {
