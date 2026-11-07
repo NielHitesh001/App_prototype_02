@@ -95,12 +95,17 @@ All transaction limits are enforced by a single validator `validateAmount(cents,
   4. Shortfall is calculated in integer cents: `totalCents - balanceCents`.
   5. Bilingual customer-facing messages (`messageEn`, `messageEl`) format amounts with Cyprus currency conventions.
 - **Shortfall Top-Up and Bonus Policy Decision:**
-  - **Decision:** The shortfall is calculated strictly as the unadjusted cash deficit (`totalCents - balanceCents`). The 10% promotional bonus is credited on the shortfall top-up just like all other top-ups.
-  - **Rationale:**
+  - **Decision:** Shortfall is calculated before bonus (`totalCents - balanceCents`); the 10% promotional bonus applies to the top-up amount, leaving the customer with leftover credits after booking.
+  - **Status:** `PENDING OWNER APPROVAL` and `PENDING LEGAL REVIEW`.
+  - **Open Question for Counsel:** Whether a promotional bonus credited on a top-up made to cover a specific booking is permitted under Cyprus consumer and e-money rules, and whether the €2,000 wallet balance cap interacts with bonus credits.
+  - **Customer Copy for Review:**
+    - English Alert (`canBook.messageEn`): `This needs {total}. You have {balance}. Top up {shortfall} to continue.` (e.g. `This needs €48.00. You have €27.50. Top up €20.50 to continue.`)
+    - English Bonus Breakdown (`App.tsx`): `A 10% bonus (+{bonus}) applies to this top-up, leaving {leftover} in wallet credits after booking.` (e.g. `A 10% bonus (+€2.05) applies to this top-up, leaving €2.05 in wallet credits after booking.`)
+    - Greek Alert (`canBook.messageEl`): `Απαιτούνται {total}. Έχετε {balance}. Συμπληρώστε {shortfall} για να συνεχίσετε.` (e.g. `Απαιτούνται 48,00 €. Έχετε 27,50 €. Συμπληρώστε 20,50 € για να συνεχίσετε.`)
+  - **Rationale for Proposed Option:**
     1. *Transparency:* Requesting the raw deficit avoids confusing reverse discount fractions (e.g. asking for €18.64 instead of €20.50).
     2. *Separation of Concerns:* `canBook()` evaluates balance sufficiency against cost; top-up promotional policy remains strictly encapsulated within the deposit engine.
     3. *Guest Retention:* Receiving the 10% bonus leaves a surplus ending balance (€2.05 in the standard QA scenario) in the guest's wallet, encouraging return bookings.
-  - **Messaging:** The UI explicitly discloses the 10% bonus breakdown beneath the shortfall alert, detailing the bonus credits added and the exact leftover wallet balance remaining after booking.
 
 ---
 
