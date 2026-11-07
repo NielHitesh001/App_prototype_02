@@ -1,47 +1,53 @@
 /**
  * Money Handling Library for Troo Cyprus Dining
  *
- * Rules:
- * 1. Internal currency representation is strictly integer cents (e.g. €12.50 = 1250 cents).
+ * Fundamental Rules:
+ * 1. Storage & Arithmetic: All monetary values are strictly represented and calculated as integer cents (e.g. €12.50 = 1250 cents).
  * 2. 1 credit = €1 = 100 cents.
- * 3. Percentage calculations (such as 10% top-up bonus) use standard commercial Round-Half-Up:
- *    Math.round(cents * rate) -> e.g. 25.5 cents rounds up to 26 cents.
- * 4. Cyprus locale formatting: 'en-CY' or 'el-CY' with EUR currency symbol (€).
+ * 3. Parser: Prefer string input for money in all callers to avoid IEEE-754 float inaccuracies.
+ * 4. Percentage calculations: Performed using integer arithmetic: Math.round((cents * ratePercent) / 100).
+ * 5. Display Formatter: formatCents() is the single source of truth for Cyprus euro locale formatting.
  */
 
 export const MAX_SINGLE_TOPUP_CENTS = 500_00; // €500.00 maximum single top-up
 export const MAX_WALLET_BALANCE_CENTS = 2_000_00; // €2,000.00 maximum wallet balance
-export const MIN_TRANSACTION_CENTS = 1; // €0.01 minimum
+export const MIN_TRANSACTION_CENTS = 1; // €0.01 minimum transaction
+
+const EURO_PATTERN = /^\d+(\.\d{1,2})?$/;
 
 /**
- * Converts a euro amount (number or string) to integer cents.
- * Rounds half up and strictly validates precision and positive value.
+ * Pure parser: Converts a euro string or number into integer cents.
+ * Enforces strict pattern checks (rejects commas, currency symbols, scientific notation, and >2 decimals).
+ * Does not check business limits; callers must use validateAmount().
+ *
+ * PREFER string input for money in all callers.
  */
 export function euroToCents(euros: number | string): number {
   if (typeof euros === 'string') {
     const trimmed = euros.trim();
-    if (!trimmed || isNaN(Number(trimmed))) {
+    if (!trimmed || !EURO_PATTERN.test(trimmed)) {
       throw new Error(`Invalid euro input: "${euros}"`);
     }
-    // Reject inputs with more than two decimal places e.g. "12.345"
-    if (trimmed.includes('.') && trimmed.split('.')[1].length > 2) {
-      throw new Error(`Invalid euro precision: "${euros}" exceeds 2 decimal places`);
-    }
     const parsed = Number(trimmed);
-    if (!isFinite(parsed) || parsed < 0) {
-      throw new Error(`Invalid euro amount: "${euros}" must be positive`);
-    }
     return Math.round(parsed * 100);
   }
 
-  if (typeof euros !== 'number' || !isFinite(euros) || euros < 0) {
-    throw new Error(`Invalid euro amount: ${euros}`);
+  if (typeof euros === 'number') {
+    if (!Number.isFinite(euros) || euros < 0) {
+      throw new Error(`Invalid euro amount: ${euros}`);
+    }
+    const cents = euros * 100;
+    if (Math.abs(cents - Math.round(cents)) > 1e-9) {
+      throw new Error(`Invalid euro precision: ${euros}`);
+    }
+    return Math.round(cents);
   }
-  return Math.round(euros * 100);
+
+  throw new Error(`Unsupported money input type: ${typeof euros}`);
 }
 
 /**
- * Converts integer cents to euro floating value for display.
+ * Converts integer cents to euro floating decimal representation.
  */
 export function centsToEuro(cents: number): number {
   if (!Number.isInteger(cents)) {
@@ -51,23 +57,42 @@ export function centsToEuro(cents: number): number {
 }
 
 /**
- * Validates user-entered text or numeric money input.
+ * Single validator for all financial bounds and transaction constraints.
  */
-export function validateAndParseInputToCents(input: string | number): {
+export function validateAmount(
+  cents: number,
+  kind?: 'topup' | 'booking' | 'refund'
+): { valid: boolean; error?: string } {
+  if (!Number.isInteger(cents) || cents < MIN_TRANSACTION_CENTS) {
+    return { valid: false, error: 'Amount must be at least €0.01 (1 cent)' };
+  }
+
+  if (kind === 'topup' && cents > MAX_SINGLE_TOPUP_CENTS) {
+    return {
+      valid: false,
+      error: `Top-up amount cannot exceed ${formatCents(MAX_SINGLE_TOPUP_CENTS)}`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validates user-entered text or numeric money input and parses to cents.
+ */
+export function validateAndParseInputToCents(
+  input: string | number,
+  kind?: 'topup' | 'booking' | 'refund'
+): {
   success: boolean;
   cents?: number;
   error?: string;
 } {
   try {
     const cents = euroToCents(input);
-    if (cents < MIN_TRANSACTION_CENTS) {
-      return { success: false, error: 'Amount must be greater than zero' };
-    }
-    if (cents > MAX_SINGLE_TOPUP_CENTS) {
-      return {
-        success: false,
-        error: `Amount exceeds maximum allowed limit of ${centsToEuro(MAX_SINGLE_TOPUP_CENTS)}`
-      };
+    const validation = validateAmount(cents, kind);
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
     }
     return { success: true, cents };
   } catch (err) {
@@ -79,20 +104,27 @@ export function validateAndParseInputToCents(input: string | number): {
 }
 
 /**
- * Calculates 10% credit bonus in integer cents using Round-Half-Up.
- * E.g.:
- * - 2500 cents (€25) * 0.10 = 250 cents (€2.50)
- * - 5000 cents (€50) * 0.10 = 500 cents (€5.00)
- * - 10000 cents (€100) * 0.10 = 1000 cents (€10.00)
- * - 255 cents (€2.55) * 0.10 = 25.5 cents -> 26 cents (Round-Half-Up verified)
+ * Calculates credit bonus in integer cents using integer arithmetic (P1-1).
+ * Avoids floating-point math: Math.round((topupCents * ratePercent) / 100).
+ *
+ * Example:
+ * - 255 cents (€2.55) with 10% -> (255 * 10) / 100 = 25.5 -> 26 cents.
+ * - 2500 cents (€25.00) with 10% -> 250 cents (€2.50).
  */
-export function calculateBonusCents(topupCents: number, rate = 0.1): number {
-  if (topupCents <= 0) return 0;
-  return Math.round(topupCents * rate);
+export function calculateBonusCents(topupCents: number, ratePercent = 10): number {
+  if (!Number.isInteger(topupCents) || topupCents <= 0) {
+    return 0;
+  }
+  if (!Number.isInteger(ratePercent) || ratePercent < 0 || ratePercent > 100) {
+    throw new Error(`ratePercent must be an integer between 0 and 100, received: ${ratePercent}`);
+  }
+  return Math.round((topupCents * ratePercent) / 100);
 }
 
 /**
+ * Single Formatter (P1-6):
  * Formats integer cents into standard Cyprus currency display.
+ * The only place in the entire codebase where currency formatting is instantiated.
  */
 export function formatCents(cents: number, locale: 'en-CY' | 'el-CY' = 'en-CY'): string {
   const euroVal = cents / 100;
@@ -105,14 +137,12 @@ export function formatCents(cents: number, locale: 'en-CY' | 'el-CY' = 'en-CY'):
 }
 
 /**
- * Universal formatter supporting either integer cents or euro decimal values.
+ * Thin wrapper for backward compatibility across UI components displaying euro amounts.
+ * Accepts only finite euro amounts (not integer cents). Calls formatCents under the hood.
  */
-export function euro(value: number, locale: 'en-CY' | 'el-CY' = 'en-CY'): string {
-  // If value is whole number representing euros or float, format cleanly
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value);
+export function euro(amountEur: number, locale: 'en-CY' | 'el-CY' = 'en-CY'): string {
+  if (!Number.isFinite(amountEur)) {
+    throw new Error(`euro() received a non-finite amount: ${amountEur}`);
+  }
+  return formatCents(Math.round(amountEur * 100), locale);
 }

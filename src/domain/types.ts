@@ -23,6 +23,7 @@ export type Event = {
   venueId: string;
   startsAt: string; // ISO 8601 with offset e.g. 2026-11-20T19:30:00+02:00
   priceEur: number | null; // null means free
+  priceCents: number | null; // integer cents (single source for calculations)
   capacity: number;
   seatsLeft: number;
   verified: boolean;
@@ -46,7 +47,6 @@ export type LedgerEntry = {
   idempotencyKey?: string;
   kind: LedgerEntryKind;
   amountCents: number; // positive for topup/bonus/refund, negative for debit
-  amountCredits: number; // euro/credits representation for backwards-compatibility (amountCents / 100)
   resultingBalanceCents: number;
   createdAt: string; // ISO 8601
   label: string;
@@ -54,12 +54,11 @@ export type LedgerEntry = {
   reference: string;
   paymentMode?: 'wallet' | 'card' | 'qr';
   meta?: Record<string, unknown>;
-  bonusCredits?: number;
+  bonusCents?: number;
 };
 
 export type Wallet = {
-  balanceCents: number; // Integer cents (primary truth)
-  balanceCredits: number; // balanceCents / 100
+  balanceCents: number; // Integer cents (only stored balance representation)
   entries: LedgerEntry[];
 };
 
@@ -69,7 +68,6 @@ export type BookingGuardResult = {
   allowed: boolean;
   reason?: BookingGuardReason;
   shortfallCents: number;
-  shortfall: number; // in euro/credits for backwards compatibility
   messageEn?: string;
   messageEl?: string;
 };
@@ -93,9 +91,12 @@ export type MenuItem = {
   description: string;
   venueId: string;
   priceEur: number;
+  priceCents: number;
   deliveryTimeMins: string;
   deliveryFeeEur: number;
+  deliveryFeeCents: number;
   minOrderEur: number;
+  minOrderCents: number;
   image: ImageRef;
 };
 

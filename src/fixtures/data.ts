@@ -83,6 +83,7 @@ export const events: Event[] = [
     venueId: 'patriko',
     startsAt: '2026-11-06T19:30:00+02:00',
     priceEur: 32,
+    priceCents: 3200,
     capacity: 24,
     seatsLeft: 8,
     verified: false,
@@ -95,6 +96,7 @@ export const events: Event[] = [
     venueId: 'dionysus',
     startsAt: '2026-11-07T11:00:00+02:00',
     priceEur: 18,
+    priceCents: 1800,
     capacity: 16,
     seatsLeft: 3,
     verified: false,
@@ -107,11 +109,25 @@ export const events: Event[] = [
     venueId: 'kafeneio',
     startsAt: '2026-11-17T18:00:00+02:00',
     priceEur: null,
+    priceCents: null,
     capacity: 30,
     seatsLeft: 12,
     verified: false,
     description: 'Free community tasting of low-intervention Cypriot wines and house-cured meats.',
     image: photo('photo-1510812431401-41d2bd2722f3', 'Glass of amber wine next to cured meats on marble counter')
+  },
+  {
+    id: 'e4',
+    title: 'Commandaria Cellar Barrel Tasting',
+    venueId: 'patriko',
+    startsAt: '2026-11-20T20:00:00+02:00',
+    priceEur: 48.1,
+    priceCents: 4810,
+    capacity: 18,
+    seatsLeft: 5,
+    verified: true,
+    description: 'Rare commandaria vintages paired with four artisan bites.',
+    image: photo('photo-1510812431401-41d2bd2722f3', 'Cellar wine tasting with oak barrels')
   }
 ];
 
@@ -122,9 +138,12 @@ export const menuItems: MenuItem[] = [
     description: 'Slow-cooked lamb shank, mountain oregano, bay leaf, and lemon-crusted village potatoes.',
     venueId: 'patriko',
     priceEur: 18.5,
+    priceCents: 1850,
     deliveryTimeMins: '30–40 min',
     deliveryFeeEur: 2.5,
+    deliveryFeeCents: 250,
     minOrderEur: 15.0,
+    minOrderCents: 1500,
     image: photo('photo-1544025162-d76694265947', 'Clay pot kleftiko lamb with wild herbs')
   },
   {
@@ -133,9 +152,12 @@ export const menuItems: MenuItem[] = [
     description: 'Grilled sheep halloumi, wild carob molasses, pickled caper leaves, and warm crusty bread.',
     venueId: 'troodos',
     priceEur: 14.0,
+    priceCents: 1400,
     deliveryTimeMins: '25–35 min',
     deliveryFeeEur: 2.0,
+    deliveryFeeCents: 200,
     minOrderEur: 12.0,
+    minOrderCents: 1200,
     image: photo('photo-1565299624946-b28f40a0ae38', 'Grilled halloumi with honey and warm sourdough')
   },
   {
@@ -144,9 +166,12 @@ export const menuItems: MenuItem[] = [
     description: 'Eight-course selection: smoked lountza, tahini, beetroot skordalia, and wood-fired mushrooms.',
     venueId: 'patriko',
     priceEur: 22.0,
+    priceCents: 2200,
     deliveryTimeMins: '35–45 min',
     deliveryFeeEur: 2.5,
+    deliveryFeeCents: 250,
     minOrderEur: 20.0,
+    minOrderCents: 2000,
     image: photo('photo-1541544741938-0af808871cc0', 'Full Mediterranean meze spread')
   },
   {
@@ -155,9 +180,12 @@ export const menuItems: MenuItem[] = [
     description: 'Traditional spit-roasted pork chunks with lemon wedges, pickled peppers, and village salad.',
     venueId: 'dionysus',
     priceEur: 16.5,
+    priceCents: 1650,
     deliveryTimeMins: '30–40 min',
     deliveryFeeEur: 2.5,
+    deliveryFeeCents: 250,
     minOrderEur: 15.0,
+    minOrderCents: 1500,
     image: photo('photo-1555939594-58d7cb561ad1', 'Charcoal grilled pork souvla platter')
   }
 ];
@@ -179,13 +207,11 @@ export const initialTableBookings: TableBooking[] = [
 
 export const initialWallet: Wallet = {
   balanceCents: 13000,
-  balanceCredits: 130,
   entries: [
     {
       id: 'l2',
       kind: 'booking',
       amountCents: -1000,
-      amountCredits: -10,
       resultingBalanceCents: 13000,
       createdAt: '2026-11-03T19:00:00+02:00',
       label: 'Table booking deposit',
@@ -197,7 +223,6 @@ export const initialWallet: Wallet = {
       id: 'l1',
       kind: 'topup',
       amountCents: 14000,
-      amountCredits: 140,
       resultingBalanceCents: 14000,
       createdAt: '2026-11-01T10:00:00+02:00',
       label: 'Wallet top-up',
