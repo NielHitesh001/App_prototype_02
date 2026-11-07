@@ -94,6 +94,13 @@ All transaction limits are enforced by a single validator `validateAmount(cents,
   3. Exact balance is permitted (`balanceCents >= totalCents`).
   4. Shortfall is calculated in integer cents: `totalCents - balanceCents`.
   5. Bilingual customer-facing messages (`messageEn`, `messageEl`) format amounts with Cyprus currency conventions.
+- **Shortfall Top-Up and Bonus Policy Decision:**
+  - **Decision:** The shortfall is calculated strictly as the unadjusted cash deficit (`totalCents - balanceCents`). The 10% promotional bonus is credited on the shortfall top-up just like all other top-ups.
+  - **Rationale:**
+    1. *Transparency:* Requesting the raw deficit avoids confusing reverse discount fractions (e.g. asking for €18.64 instead of €20.50).
+    2. *Separation of Concerns:* `canBook()` evaluates balance sufficiency against cost; top-up promotional policy remains strictly encapsulated within the deposit engine.
+    3. *Guest Retention:* Receiving the 10% bonus leaves a surplus ending balance (€2.05 in the standard QA scenario) in the guest's wallet, encouraging return bookings.
+  - **Messaging:** The UI explicitly discloses the 10% bonus breakdown beneath the shortfall alert, detailing the bonus credits added and the exact leftover wallet balance remaining after booking.
 
 ---
 

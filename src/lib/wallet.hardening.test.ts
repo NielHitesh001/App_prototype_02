@@ -468,4 +468,18 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     expect(() => euro(Infinity)).toThrow(/euro\(\) received a non-finite amount: Infinity/);
     expect(() => euro(-Infinity)).toThrow(/euro\(\) received a non-finite amount: -Infinity/);
   });
+
+  it('Step 3: pilot build guard ensures placeholders are detected and marked bilingually', async () => {
+    const fs = await import('fs');
+    const storeContent = fs.readFileSync('src/store/app-store.tsx', 'utf-8');
+    const pkgJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+
+    // Verify guard script exists in package.json
+    expect(pkgJson.scripts['check:pilot']).toBeDefined();
+    expect(pkgJson.scripts['build:pilot']).toBeDefined();
+
+    // Verify both English and Greek strings have explicit PLACEHOLDER markers
+    expect(storeContent).toContain('[PLACEHOLDER: support email — replace before pilot launch]');
+    expect(storeContent).toContain('Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με [PLACEHOLDER: support email — replace before pilot launch]');
+  });
 });

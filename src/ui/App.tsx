@@ -331,6 +331,9 @@ function BookingSheet({
               <p className="error" role="alert">
                 {guard.messageEn || `This needs ${formatCents(totalCents)}. You have ${formatCents(wallet.balanceCents)}. Top up ${formatCents(guard.shortfallCents)} to continue.`}
               </p>
+              <p className="text-xs text-stone-600 mt-1">
+                A 10% bonus (+{formatCents(calculateBonusCents(guard.shortfallCents))}) applies to this top-up, leaving {formatCents(wallet.balanceCents + guard.shortfallCents + calculateBonusCents(guard.shortfallCents) - totalCents)} in wallet credits after booking.
+              </p>
               <button
                 type="button"
                 className="secondary mt-2 w-full"
