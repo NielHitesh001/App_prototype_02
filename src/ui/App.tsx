@@ -23,8 +23,8 @@ import {
 
 import type { Event, Venue } from '../domain/types';
 import { deals, events, menuItems, venues } from '../fixtures/data';
-import { currentSeasonLabel, eventDate, eventTime, isThisWeek, longDate } from '../lib/dates';
-import { calculateBonusCents, euro, formatCents } from '../lib/money';
+import { currentSeasonLabel, eventDate, eventTime, isPastEvent, isThisWeek, isTodayInNicosia, longDate } from '../lib/dates';
+import { calculateBonusCents, euro, formatCents, MAX_SINGLE_TOPUP_CENTS, MIN_TRANSACTION_CENTS } from '../lib/money';
 import { canBook } from '../lib/wallet';
 import { useStore } from '../store/app-store';
 
@@ -112,11 +112,15 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-const DevMockBanner = () => (
-  <aside className="mock" aria-label="Development preview notice">
-    Development preview · Mock data in fixtures · {currentSeasonLabel()}
-  </aside>
-);
+const DevMockBanner = () => {
+  const showBanner = import.meta.env.DEV || import.meta.env.VITE_SHOW_DEV_BANNER === 'true';
+  if (!showBanner) return null;
+  return (
+    <aside className="mock" aria-label="Development preview notice">
+      Development preview · Mock data in fixtures · {currentSeasonLabel()}
+    </aside>
+  );
+};
 
 function Toast({ text }: { text: string | null }) {
   return text ? (
@@ -173,6 +177,22 @@ function Dialog({
         {children}
       </div>
     </div>
+  );
+}
+
+function PromotionTermsDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Dialog title="Promotion terms" onClose={onClose}>
+      <div className="py-2 text-sm text-[#5a483a]">
+        <h3 className="font-semibold text-base mb-2">Offer terms & conditions</h3>
+        <p className="p-3 bg-[#fcf9f5] rounded-lg border border-[#ebdcd3] text-stone-700">
+          [PLACEHOLDER: promotion terms — pending legal review]
+        </p>
+      </div>
+      <button className="primary mt-4 w-full" onClick={onClose} type="button">
+        Close terms
+      </button>
+    </Dialog>
   );
 }
 
@@ -292,7 +312,7 @@ function BookingSheet({
                 checked={method === 'wallet'}
                 onChange={() => setMethod('wallet')}
               />
-              Pay with credits
+              Pay with wallet credits
             </label>
             <label>
               <input
@@ -310,7 +330,7 @@ function BookingSheet({
                 checked={method === 'qr'}
                 onChange={() => setMethod('qr')}
               />
-              Tap to Pay QR <small>(mobile handoff)</small>
+              Show QR code <small>(mobile handoff)</small>
             </label>
           </fieldset>
 
@@ -321,8 +341,19 @@ function BookingSheet({
 
           {method === 'qr' && (
             <div className="qr">
-              <QrCode aria-hidden="true" size={80} />
-              <span>Show this QR code to the venue host upon arrival to settle with credits.</span>
+              <p className="notice text-xs p-2 bg-amber-50 border border-amber-200 rounded text-amber-900 font-medium mb-2">
+                Preview only. This code is not valid for payment yet.
+              </p>
+              {import.meta.env.VITE_PILOT_QR_ENABLED === 'true' ? (
+                <>
+                  <QrCode aria-hidden="true" size={80} />
+                  <span>Show this QR code to the venue host upon arrival to settle with wallet credits.</span>
+                </>
+              ) : (
+                <span className="text-xs text-[#7a6a5a]">
+                  QR payments are disabled in preview mode.
+                </span>
+              )}
             </div>
           )}
 
@@ -365,7 +396,7 @@ function BookingSheet({
             : method === 'wallet'
               ? `Confirm with ${formatCents(totalCents)}`
               : method === 'qr'
-                ? 'Open payment QR'
+                ? 'Show QR code'
                 : 'Continue with card'}
         </button>
       </div>
@@ -378,6 +409,7 @@ function Discover() {
   const [filter, setFilter] = useState('All');
   const [map, setMap] = useState(false);
   const [bookVenue, setBookVenue] = useState<Venue | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { saved, toggleSaved } = useStore();
 
@@ -420,6 +452,13 @@ function Discover() {
                 <p>
                   {v.name} · {d.discountNote ?? 'Winter seasonal'}
                 </p>
+                <button
+                  type="button"
+                  className="text-xs text-link underline mt-2 block"
+                  onClick={() => setTermsOpen(true)}
+                >
+                  Terms apply
+                </button>
               </article>
             );
           })}
@@ -465,7 +504,7 @@ function Discover() {
             <h2>Cyprus winter hearth map</h2>
             <p>
               Static map preview covering Old Town Limassol and Troodos foothills. Interactive map
-              pins are planned for Phase 2.
+              pins are coming soon.
             </p>
             <button
               className="secondary"
@@ -516,14 +555,14 @@ function Discover() {
                       </p>
                     )}
 
-                    <div className="actions">
+                    <div className="actions flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                       <button
                         className="secondary"
                         onClick={() => setBookVenue(v)}
                       >
                         Book a table
                       </button>
-                      <Link className="text-link" to={`/discover?venue=${v.id}`}>
+                      <Link className="text-link whitespace-nowrap" to={`/discover?venue=${v.id}`}>
                         View venue
                       </Link>
                     </div>
@@ -554,6 +593,10 @@ function Discover() {
             setTimeout(() => setToast(null), 3000);
           }}
         />
+      )}
+
+      {termsOpen && (
+        <PromotionTermsDialog onClose={() => setTermsOpen(false)} />
       )}
 
       <Toast text={toast} />
@@ -595,7 +638,7 @@ function Taste() {
       <section className="page">
         <DevMockBanner />
         <p className="eyebrow">Taste & Heritage</p>
-        <h1>Food worth making time for</h1>
+        <h1>Winter culinary heritage</h1>
         <p className="lead">
           Rediscover authentic winter culinary traditions, slow earthenware baking, and indigenous
           vintages.
@@ -732,14 +775,12 @@ function Kouzina() {
                     </div>
                     <h2>{item.name}</h2>
                     <p className="text-xs text-[#7a6a5a] mb-2">{item.description}</p>
-                    <div className="flex items-center gap-3 text-xs text-[#4f5b45] font-semibold mb-3">
-                      <span className="flex items-center gap-1">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-[#4f5b45] font-semibold mb-3">
+                      <span className="flex items-center gap-1 whitespace-nowrap">
                         <Clock size={13} aria-hidden="true" /> {item.deliveryTimeMins}
                       </span>
-                      <span>·</span>
-                      <span>Fee: {euro(item.deliveryFeeEur)}</span>
-                      <span>·</span>
-                      <span>Min: {euro(item.minOrderEur)}</span>
+                      <span className="whitespace-nowrap">Fee: {euro(item.deliveryFeeEur)}</span>
+                      <span className="whitespace-nowrap">Min: {euro(item.minOrderEur)}</span>
                     </div>
                   </div>
 
@@ -912,10 +953,10 @@ function Pass() {
             <article className="wallet-hero">
               <p>Available balance</p>
               <strong>{formatCents(wallet.balanceCents)}</strong>
-              <span>1 credit = €1 · 10% bonus on top-ups</span>
+              <span>1 credit = €1 · 10% bonus on wallet credits</span>
               <div className="hero-actions">
                 <button type="button" onClick={() => setTopupOpen(true)}>
-                  Top up credits
+                  Top up wallet credits
                 </button>
                 <button
                   type="button"
@@ -923,7 +964,7 @@ function Pass() {
                   onClick={() => setQrOpen(true)}
                 >
                   <QrCode size={16} aria-hidden="true" style={{ display: 'inline', marginRight: 6 }} />
-                  Tap to Pay QR
+                  Show QR code
                 </button>
               </div>
             </article>
@@ -953,7 +994,7 @@ function Pass() {
                   </div>
                 </div>
                 <div className="text-xs text-[#7a6a5a] pt-2 border-t border-[#ebdcd3]">
-                  <span>Synced dietary alerts: </span>
+                  <span>Saved dietary notes: </span>
                   <strong className="text-[#2b2118]">
                     {tableBookings[0].dietarySync.join(', ')}
                   </strong>
@@ -978,7 +1019,7 @@ function Pass() {
               <button
                 className="secondary"
                 onClick={() => {
-                  setToast('Account settings available in Phase 2.');
+                  setToast('Account settings are coming soon.');
                   setTimeout(() => setToast(null), 2500);
                 }}
               >
@@ -1016,26 +1057,37 @@ function Pass() {
         <TopUpModal
           onClose={() => setTopupOpen(false)}
           onSuccess={added => {
-            setToast(`Added ${formatCents(added)} credits to your wallet!`);
+            setToast(`Added ${formatCents(added)} wallet credits!`);
             setTimeout(() => setToast(null), 3000);
           }}
         />
       )}
 
-      {/* Web QR Code Modal (Tap to pay handoff) */}
+      {/* Web QR Code Modal */}
       {qrOpen && (
-        <Dialog title="Tap to Pay QR" onClose={() => setQrOpen(false)}>
+        <Dialog title="Show QR code" onClose={() => setQrOpen(false)}>
           <div className="qr">
-            <QrCode size={140} aria-hidden="true" />
-            <p className="lead" style={{ margin: 0 }}>
-              Scan at the tavern table terminal to settle your bill with wallet credits.
+            <p className="notice text-xs p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 font-medium mb-3">
+              Preview only. This code is not valid for payment yet.
             </p>
-            <span className="text-xs text-[#7a6a5a]">
-              Valid for {currentSeasonLabel()} · Connected account JD
-            </span>
+            {import.meta.env.VITE_PILOT_QR_ENABLED === 'true' ? (
+              <>
+                <QrCode size={140} aria-hidden="true" />
+                <p className="lead" style={{ margin: 0 }}>
+                  Scan at the tavern table terminal to settle your bill with wallet credits.
+                </p>
+                <span className="text-xs text-[#7a6a5a]">
+                  Valid for {currentSeasonLabel()} · Connected account JD
+                </span>
+              </>
+            ) : (
+              <p className="text-xs text-[#7a6a5a] my-2">
+                QR payment is disabled in preview. A one-time, expiring payment token will be enabled before pilot launch.
+              </p>
+            )}
           </div>
           <button className="primary" onClick={() => setQrOpen(false)}>
-            Close QR code
+            Close
           </button>
         </Dialog>
       )}
@@ -1057,6 +1109,7 @@ function TopUpModal({
   const [customAmount, setCustomAmount] = useState<string>('');
   const [state, setState] = useState<'idle' | 'loading' | 'failure'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
   const { addTopup, wallet } = useStore();
 
   let topupCents = 0;
@@ -1098,10 +1151,17 @@ function TopUpModal({
   return (
     <Dialog title="Top up your wallet" onClose={onClose}>
       <p className="lead">
-        Receive an instant <strong>10% credit bonus</strong> on every top-up during {currentSeasonLabel()}.
+        Receive an instant <strong>10% credit bonus</strong> on every top-up during {currentSeasonLabel()}.{' '}
+        <button
+          type="button"
+          className="text-xs text-link underline"
+          onClick={() => setShowTerms(true)}
+        >
+          Terms apply
+        </button>
       </p>
 
-      <div className="amounts" role="group" aria-label="Select top-up amount">
+      <div className="amounts" role="group" aria-label="Select top-up amount" style={{ overflowX: 'auto', flexWrap: 'nowrap' }}>
         {[25, 50, 100].map(amount => {
           const tierCents = amount * 100;
           const tierBonus = calculateBonusCents(tierCents, 10);
@@ -1130,8 +1190,8 @@ function TopUpModal({
           id="custom-topup-input"
           type="number"
           step="0.01"
-          min="1"
-          max="500"
+          min={MIN_TRANSACTION_CENTS / 100}
+          max={MAX_SINGLE_TOPUP_CENTS / 100}
           placeholder="e.g. 20.50"
           value={customAmount}
           onChange={e => {
@@ -1140,10 +1200,13 @@ function TopUpModal({
           }}
           className="w-full px-3 py-2 border border-[#d6c7b2] rounded text-sm"
         />
+        <p className="text-xs text-[#7a6a5a] mt-1">
+          Minimum {formatCents(MIN_TRANSACTION_CENTS)} · Maximum {formatCents(MAX_SINGLE_TOPUP_CENTS)} per top-up.
+        </p>
       </div>
 
       <div className="total">
-        <span>Credits to receive</span>
+        <span>Wallet credits to receive</span>
         <strong>{formatCents(totalCreditsCents)}</strong>
       </div>
 
@@ -1153,6 +1216,10 @@ function TopUpModal({
         </p>
       )}
 
+      <p className="text-xs text-[#7a6a5a] p-2 bg-[#fcf9f5] rounded border border-[#ebdcd3] mt-3">
+        Test mode. No real payment is taken. [PLACEHOLDER: Greek translation — verify before pilot]
+      </p>
+
       <div className="mt-4">
         <button
           className="primary"
@@ -1161,9 +1228,11 @@ function TopUpModal({
         >
           {state === 'loading'
             ? 'Processing transaction…'
-            : `Pay ${formatCents(topupCents)} for ${formatCents(totalCreditsCents)} credits`}
+            : `Add ${formatCents(totalCreditsCents)} wallet credits (test)`}
         </button>
       </div>
+
+      {showTerms && <PromotionTermsDialog onClose={() => setShowTerms(false)} />}
     </Dialog>
   );
 }
@@ -1378,6 +1447,7 @@ function TableDetail() {
   const navigate = useNavigate();
 
   const booking = tableBookings.find(b => b.id === id) ?? tableBookings[0];
+  const isToday = booking ? isTodayInNicosia(booking.dateStr) : false;
 
   return (
     <Shell>
@@ -1392,7 +1462,7 @@ function TableDetail() {
         </button>
 
         <p className="eyebrow">Confirmed Table</p>
-        <h1>Tonight&apos;s table details</h1>
+        <h1>{isToday ? "Tonight's table" : 'Table details'}</h1>
 
         {booking ? (
           <article className="card" style={{ padding: 24 }}>
@@ -1417,13 +1487,17 @@ function TableDetail() {
                 <dd className="font-bold m-0">{booking.partySize} guests</dd>
               </div>
               <div>
-                <dt className="text-[#7a6a5a] text-xs">Kitchen status</dt>
-                <dd className="font-bold m-0 text-[#4f5b45]">Dietary synced</dd>
+                <dt className="text-[#7a6a5a] text-xs">Date</dt>
+                <dd className="font-bold m-0">{booking.dateStr}</dd>
+              </div>
+              <div>
+                <dt className="text-[#7a6a5a] text-xs">Allergy note</dt>
+                <dd className="font-bold m-0 text-[#4f5b45]">Saved to your account</dd>
               </div>
             </dl>
 
             <div className="p-3 bg-[#fcf9f5] rounded-xl border border-[#ebdcd3] my-4 text-xs text-[#7a6a5a]">
-              <strong>Allergen profile delivered to kitchen:</strong>
+              <strong>Allergy note saved. The kitchen has not been notified in this preview.</strong>
               <p className="m-0 mt-1">{booking.dietarySync.join(', ')}</p>
             </div>
 
@@ -1454,19 +1528,21 @@ function Events() {
   const [toast, setToast] = useState<string | null>(null);
 
   const filtered = events.filter(e => {
-    if (filter === 'All') return true;
-    if (filter === 'This week') return isThisWeek(e.startsAt);
-    if (filter === 'Tastings') return e.priceEur !== null;
+    if (filter === 'All') return !isPastEvent(e.startsAt);
+    if (filter === 'This week') return isThisWeek(e.startsAt) && !isPastEvent(e.startsAt);
+    if (filter === 'Tastings') return e.priceEur !== null && !isPastEvent(e.startsAt);
+    if (filter === 'Past') return isPastEvent(e.startsAt);
     return true;
   });
 
   const counts: Record<string, number> = {
-    All: events.length,
-    'This week': events.filter(e => isThisWeek(e.startsAt)).length,
-    Tastings: events.filter(e => e.priceEur !== null).length
+    All: events.filter(e => !isPastEvent(e.startsAt)).length,
+    'This week': events.filter(e => isThisWeek(e.startsAt) && !isPastEvent(e.startsAt)).length,
+    Tastings: events.filter(e => e.priceEur !== null && !isPastEvent(e.startsAt)).length,
+    Past: events.filter(e => isPastEvent(e.startsAt)).length
   };
 
-  const chips = ['All', 'This week', 'Tastings'];
+  const chips = ['All', 'This week', 'Tastings', 'Past'];
 
   return (
     <Shell>
@@ -1498,8 +1574,9 @@ function Events() {
           {filtered.length > 0 ? (
             filtered.map(e => {
               const v = getVenue(e.venueId);
+              const past = isPastEvent(e.startsAt);
               return (
-                <article className="card event" key={e.id}>
+                <article className="card event" key={e.id} style={past ? { opacity: 0.75 } : undefined}>
                   <p className="event-date">
                     {eventDate(e.startsAt)} · {eventTime(e.startsAt)}
                   </p>
@@ -1510,6 +1587,9 @@ function Events() {
                   {e.description && (
                     <p className="text-sm text-[#7a6a5a] my-2">{e.description}</p>
                   )}
+                  {past && (
+                    <p className="text-xs text-[#9a4a3a] font-medium mt-1">This event has ended.</p>
+                  )}
                   <div className="split mt-3">
                     <div>
                       <strong className="text-lg">
@@ -1519,12 +1599,25 @@ function Events() {
                         {e.seatsLeft} seats remaining
                       </span>
                     </div>
-                    <button
-                      className="secondary"
-                      onClick={() => setBookingEvent(e)}
-                    >
-                      Reserve
-                    </button>
+                    {past ? (
+                      <button
+                        className="secondary"
+                        disabled
+                        aria-disabled="true"
+                        type="button"
+                        style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                      >
+                        Reserve
+                      </button>
+                    ) : (
+                      <button
+                        className="secondary"
+                        type="button"
+                        onClick={() => setBookingEvent(e)}
+                      >
+                        Reserve
+                      </button>
+                    )}
                   </div>
                 </article>
               );
@@ -1571,7 +1664,7 @@ function Partner() {
         <h1>Bring your tables to discerning diners</h1>
         <p className="lead">
           Join the Cyprus Winter Dining Network. The partner shift dashboard (with live covers and
-          hearth status) is scheduled for Phase 2. Register below to receive partner onboarding.
+          hearth status) is coming soon. Register below to receive partner onboarding.
         </p>
 
         {submitted ? (
@@ -1579,7 +1672,8 @@ function Partner() {
             <Sparkles size={36} className="text-[#9a4a3a] mx-auto mb-3" aria-hidden="true" />
             <h2>Thank you for your inquiry</h2>
             <p className="lead">
-              Our culinary partnership team will reach out within 2 business days.
+              Your enquiry has been saved locally. It has not been sent yet.{' '}
+              [PLACEHOLDER: submission endpoint — add before pilot]
             </p>
             <button className="secondary" onClick={() => setSubmitted(false)}>
               Submit another request
@@ -1614,6 +1708,10 @@ function Partner() {
                 placeholder="Wood-fired oven, fireplace seating, village meze..."
               />
             </label>
+            <p className="text-xs text-[#7a6a5a] mb-2">
+              We use your details only to respond to this enquiry.{' '}
+              [PLACEHOLDER: privacy policy link]
+            </p>
             <button type="submit" className="primary mt-2">
               Request partner invitation
             </button>

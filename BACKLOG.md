@@ -104,3 +104,39 @@ Expand venue curation from Limassol Old Town and Larnaca villages to nationwide 
 ### Backend Endpoints
 - `GET /api/v1/regions`: List supported dining districts with active venue counts.
 - `GET /api/v1/venues?region=:regionId`: Filter venues by geographic region.
+
+---
+
+## 5. QR Payment — One-Time Expiring Token (A3)
+
+The QR code shown on the Pass screen is currently a **preview only** (disabled via `VITE_PILOT_QR_ENABLED`).
+
+Before pilot launch, implement server-side generation of a one-time, expiring payment token that is:
+- Bound to a specific amount and transaction ID.
+- Valid for a single scan at the in-venue terminal.
+- Generated server-side; never constructed in the browser.
+- Rotated or invalidated if unused after a configurable TTL (suggested: 60 seconds).
+
+Enable with `VITE_PILOT_QR_ENABLED=true` once implemented and security-reviewed.
+
+---
+
+## 6. English / Ελληνικά Language Toggle (C9)
+
+Add a full localisation system:
+- Implement a locale context (e.g., React context with `'en'` | `'el'` values).
+- Translate all customer-facing strings using a resource file (e.g. `src/i18n/el.ts`).
+- All strings currently marked `[PLACEHOLDER: Greek translation — verify before pilot]` must be translated and verified by a native speaker before pilot launch.
+- Language toggle control must be accessible (keyboard, screen-reader labelled).
+
+---
+
+## 7. Partner Form Submission Endpoint (C8)
+
+The partner enquiry form (`/partner`) currently saves locally only (`setSubmitted(true)`). No data is sent.
+
+Before pilot:
+- Add `POST /api/v1/partner/enquiries` endpoint.
+- Form `onSubmit` must `fetch()` to this endpoint and handle success/error states.
+- Remove the "[PLACEHOLDER: submission endpoint — add before pilot]" notice from the success card once the endpoint is live.
+- Review privacy policy requirement: add link to `[PLACEHOLDER: privacy policy link]` in the form.
