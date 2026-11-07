@@ -470,9 +470,22 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
   });
 
   it('Step 3: pilot build guard fails when a placeholder is present in src/', async () => {
-    const fs = await import('fs');
-    const path = await import('path');
-    const { execSync } = await import('child_process');
+    const fsModName = 'fs';
+    const pathModName = 'path';
+    const cpModName = 'child_process';
+    const fs = (await import(fsModName)) as {
+      writeFileSync: (p: string, c: string) => void;
+      readFileSync: (p: string, enc: string) => string;
+      existsSync: (p: string) => boolean;
+      unlinkSync: (p: string) => void;
+    };
+    const path = (await import(pathModName)) as {
+      join: (...args: string[]) => string;
+    };
+    const cp = (await import(cpModName)) as {
+      execSync: (cmd: string, opts?: { stdio?: string }) => unknown;
+    };
+    const execSync = cp.execSync;
 
     const tempFilePath = path.join('src', '_test_pilot_guard_temp.ts');
     const marker = 'PLACE' + 'HOLDER';
