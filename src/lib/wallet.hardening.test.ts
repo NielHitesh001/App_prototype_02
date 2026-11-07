@@ -469,17 +469,46 @@ describe('Wallet Hardening & Audit Fixes (P0, P1, P2)', () => {
     expect(() => euro(-Infinity)).toThrow(/euro\(\) received a non-finite amount: -Infinity/);
   });
 
-  it('Step 3: pilot build guard ensures placeholders are detected and marked bilingually', async () => {
+  it('Step 3: pilot build guard fails when a placeholder is present in src/', async () => {
     const fs = await import('fs');
+    const path = await import('path');
+    const { execSync } = await import('child_process');
+
+    const tempFilePath = path.join('src', '_test_pilot_guard_temp.ts');
+    const marker = 'PLACE' + 'HOLDER';
+
+    // 1. Verify that creating a file with the placeholder causes check:pilot to exit non-zero
+    try {
+      fs.writeFileSync(tempFilePath, `export const TEST_GUARD = "[${marker}: test]";\n`);
+      let failed = false;
+      try {
+        execSync('npm run check:pilot', { stdio: 'pipe' });
+      } catch (err: unknown) {
+        failed = true;
+        const execErr = err as { status?: number };
+        expect(execErr.status).not.toBe(0);
+      }
+      expect(failed).toBe(true);
+    } finally {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
+
+    // 2. Explicitly list current customer-facing strings pending configuration
     const storeContent = fs.readFileSync('src/store/app-store.tsx', 'utf-8');
+    const pendingPlaceholders = [
+      `[${marker}: support email — replace before pilot launch]`,
+      `Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με [${marker}: support email — replace before pilot launch]`
+    ];
+
+    for (const pending of pendingPlaceholders) {
+      expect(storeContent).toContain(pending);
+    }
+
+    // 3. Verify package.json scripts configuration
     const pkgJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-
-    // Verify guard script exists in package.json
     expect(pkgJson.scripts['check:pilot']).toBeDefined();
-    expect(pkgJson.scripts['build:pilot']).toBeDefined();
-
-    // Verify both English and Greek strings have explicit PLACEHOLDER markers
-    expect(storeContent).toContain('[PLACEHOLDER: support email — replace before pilot launch]');
-    expect(storeContent).toContain('Η επιστροφή υπερβαίνει το όριο των 2.000 € του πορτοφολιού. Επικοινωνήστε με [PLACEHOLDER: support email — replace before pilot launch]');
+    expect(pkgJson.scripts['build:pilot']).toBe('npm run check:pilot && npm run build');
   });
 });

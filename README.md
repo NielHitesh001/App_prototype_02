@@ -19,8 +19,11 @@ npm install
 npm run dev
 # The app will be available at http://localhost:5173 (or http://127.0.0.1:5173)
 
-# Build for production with strict TypeScript check
+# Build for production with strict TypeScript check (standard build; does NOT run placeholder guard)
 npm run build
+
+# Pilot release build (enforces check:pilot guard; blocks build if any customer-facing PLACEHOLDER remains in src/)
+npm run build:pilot
 
 # Run linter
 npm run lint
