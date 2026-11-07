@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Wallet } from '../domain/types';
 import { events, initialWallet } from '../fixtures/data';
-import { eventDate, eventTime } from './dates';
+import { eventDate, eventTime, isEventReservable, isPastEvent, isTodayInNicosia } from './dates';
 import {
   calculateBonusCents,
   centsToEuro,
@@ -28,6 +28,27 @@ describe('1. Dates & Cyprus Locale', () => {
   it('formats time with 24-hour European Cyprus standard', () => {
     const time = eventTime('2026-11-06T19:30:00+02:00');
     expect(time).toBe('19:30');
+  });
+
+  it('A1: an event whose start time is before now is not reservable', () => {
+    const now = new Date('2026-11-07T12:00:00+02:00');
+    const pastEventStartsAt = '2026-11-06T19:30:00+02:00';
+    expect(isPastEvent(pastEventStartsAt, now)).toBe(true);
+    expect(isEventReservable(pastEventStartsAt, now)).toBe(false);
+  });
+
+  it('A1: an event starting in 1 hour is reservable', () => {
+    const now = new Date('2026-11-07T12:00:00+02:00');
+    const futureEventStartsAt = new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+    expect(isPastEvent(futureEventStartsAt, now)).toBe(false);
+    expect(isEventReservable(futureEventStartsAt, now)).toBe(true);
+  });
+
+  it('identifies today in Nicosia correctly', () => {
+    const now = new Date('2026-11-07T12:00:00+02:00');
+    expect(isTodayInNicosia('Tonight', now)).toBe(true);
+    expect(isTodayInNicosia('2026-11-07T20:00:00+02:00', now)).toBe(true);
+    expect(isTodayInNicosia('2026-11-20T20:00:00+02:00', now)).toBe(false);
   });
 });
 

@@ -34,6 +34,32 @@ export const isThisWeek = (iso: string, now = new Date()) => {
   return d >= 0 && d < 7 * 86400000;
 };
 
+export const isPastEvent = (iso: string, now = new Date()): boolean => {
+  return new Date(iso).getTime() < now.getTime();
+};
+
+export const isEventReservable = (iso: string, now = new Date()): boolean => {
+  return !isPastEvent(iso, now);
+};
+
+export const isTodayInNicosia = (dateStrOrIso: string, now = new Date()): boolean => {
+  const lower = (dateStrOrIso || '').toLowerCase().trim();
+  if (lower === 'tonight' || lower === 'today') {
+    return true;
+  }
+  const targetDate = new Date(dateStrOrIso);
+  if (isNaN(targetDate.getTime())) {
+    return false;
+  }
+  const nicosiaFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return nicosiaFormatter.format(targetDate) === nicosiaFormatter.format(now);
+};
+
 export const currentSeasonLabel = (now = new Date()) => {
   const year = now.getFullYear();
   return `Winter ${year}`;
