@@ -42,22 +42,26 @@ test.describe('Troo Cyprus Dining — Core User Journeys', () => {
 
   test('booking guard blocks overspending and calculates shortfall', async ({ page }) => {
     await page.goto('/events');
-    // Find an event with price e.g. 32
-    await page.getByRole('button', { name: 'Reserve' }).first().click();
+    // Find an event with price (Commandaria Cellar Barrel Tasting, €48.10)
+    const pricedCard = page.locator('article.event', { hasText: 'Commandaria Cellar Barrel Tasting' });
+    await pricedCard.getByRole('button', { name: 'Reserve' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
 
-    // Increase guests to 4 (4 * 32 = 128) -> still under 130
-    const addGuestBtn = page.getByRole('button', { name: 'Increase guests' });
-    await addGuestBtn.click(); // 2 guests (64)
-    await addGuestBtn.click(); // 3 guests (96)
-    await addGuestBtn.click(); // 4 guests (128)
-
-    // Verify confirm button is enabled
+    // With 1 guest (€48.10 <= €130 balance), confirm button is enabled
     const confirmBtn = page.getByRole('button', { name: /Confirm with/ });
     await expect(confirmBtn).toBeEnabled();
 
-    // Close and test with insufficient balance or Kouzina delivery overspend
+    // Increase guests to 2 (2 * 48.10 = 96.20 <= 130) -> still enabled
+    const addGuestBtn = page.getByRole('button', { name: 'Increase guests' });
+    await addGuestBtn.click();
+    await expect(confirmBtn).toBeEnabled();
+
+    // Increase guests to 3 (3 * 48.10 = 144.30 > 130) -> shortfall alert appears
+    await addGuestBtn.click();
+    await expect(page.getByRole('alert')).toBeVisible();
+
+    // Close and finish
     await page.keyboard.press('Escape');
   });
 
@@ -175,6 +179,39 @@ test.describe('Troo Cyprus Dining — Core User Journeys', () => {
       expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1); // no accidental horizontal overflow
     }
   });
+
+  test('mobile orientation: no horizontal scrollbar in landscape (844x390 and 667x375) or small portrait (360x780)', async ({ page }) => {
+    const orientations = [
+      { name: 'landscape-844x390', width: 844, height: 390 },
+      { name: 'landscape-667x375', width: 667, height: 375 },
+      { name: 'portrait-360x780', width: 360, height: 780 }
+    ];
+
+    for (const { width, height } of orientations) {
+      await page.setViewportSize({ width, height });
+      for (const route of ['/discover', '/taste', '/kouzina', '/pass', '/events', '/partner']) {
+        await page.goto(route);
+        const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+        const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+        expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
+      }
+    }
+  });
+
+  test('mobile orientation: landscape maintains compact bars and accessible primary content', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.goto('/pass');
+
+    // Header and Nav should be compact in landscape orientation
+    const headerH = await page.locator('.header').evaluate(el => el.getBoundingClientRect().height);
+    const navH = await page.locator('.bottom-nav').evaluate(el => el.getBoundingClientRect().height);
+    expect(headerH).toBeLessThanOrEqual(52);
+    expect(navH).toBeLessThanOrEqual(50);
+
+    // Wallet balance in hero should be visible above bottom-nav without requiring scroll
+    const walletBalance = page.locator('.wallet-hero strong');
+    await expect(walletBalance).toBeInViewport();
+  });
 });
 
 // ── Audit-pass-1 regression tests ─────────────────────────────────────────────
@@ -195,7 +232,7 @@ test.describe('Audit Pass 1 — A1/A2/A3/B1/B3/B4 regressions', () => {
     }
 
     // "This event has ended." label must be present for at least one event
-    await expect(page.getByText('This event has ended.')).toBeVisible();
+    await expect(page.getByText('This event has ended.').first()).toBeVisible();
   });
 
   // A1: "All" tab must not show past events at all

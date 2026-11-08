@@ -971,7 +971,7 @@ function Pass() {
 
             {/* Tonight's Table Details Card (Screen 6 reference) */}
             {tableBookings.length > 0 && (
-              <article className="card" style={{ padding: 20 }}>
+              <article className="card card-padded">
                 <div className="flex items-center justify-between mb-2">
                   <span className="eyebrow">Active reservation</span>
                   <span className="text-xs bg-[#f1f6ed] text-[#4f5b45] font-bold px-2.5 py-1 rounded-full">
@@ -1465,7 +1465,7 @@ function TableDetail() {
         <h1>{isToday ? "Tonight's table" : 'Table details'}</h1>
 
         {booking ? (
-          <article className="card" style={{ padding: 24 }}>
+          <article className="card card-padded">
             <div className="flex items-center justify-between mb-3">
               <h2>{booking.venueName}</h2>
               <span className="bg-[#f1f6ed] text-[#4f5b45] text-xs font-bold px-3 py-1 rounded-full">
@@ -1668,7 +1668,7 @@ function Partner() {
         </p>
 
         {submitted ? (
-          <div className="card" style={{ padding: 24, textAlign: 'center' }}>
+          <div className="card card-padded text-center">
             <Sparkles size={36} className="text-[#9a4a3a] mx-auto mb-3" aria-hidden="true" />
             <h2>Thank you for your inquiry</h2>
             <p className="lead">
@@ -1681,8 +1681,7 @@ function Partner() {
           </div>
         ) : (
           <form
-            className="partner card"
-            style={{ padding: 24 }}
+            className="partner card card-padded"
             onSubmit={e => {
               e.preventDefault();
               setSubmitted(true);
