@@ -130,11 +130,14 @@ select:focus-visible {
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
-  transition: transform 0.15s ease;
+  min-height: 36px;
+  box-shadow: 0 2px 8px rgba(154, 74, 58, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .balance-chip:hover {
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(154, 74, 58, 0.18);
 }
 
 .profile {
@@ -168,6 +171,7 @@ select:focus-visible {
   font-size: 11px;
   font-weight: 700;
   margin: 0 0 14px;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -263,6 +267,9 @@ p {
   padding: 2px 2px 14px;
   margin: 0 -2px;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #ccb0a9 transparent;
 }
 
 .deal {
@@ -271,6 +278,7 @@ p {
   background: linear-gradient(135deg, #9a4a3a 0%, #7c3325 100%);
   color: #ffffff;
   box-shadow: 0 4px 16px rgba(43, 33, 24, 0.12);
+  scroll-snap-align: start;
 }
 
 .deal span {
@@ -309,6 +317,25 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+.discover-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+
+.discover-controls .field-label,
+.discover-controls input {
+  grid-column: 1 / -1;
+}
+
+.discover-controls input,
+.discover-controls select {
+  min-width: 0;
+  width: 100%;
 }
 
 .chips {
@@ -407,9 +434,12 @@ p {
 
 .venue img {
   width: 100px;
-  height: 100%;
-  min-height: 150px;
+  height: 150px;
+  min-height: 0;
+  align-self: stretch;
+  display: block;
   object-fit: cover;
+  background: #f5ede2;
 }
 
 .venue > div {
@@ -464,6 +494,36 @@ p {
   padding: 28px 16px;
   text-align: center;
   color: #7a6a5a;
+}
+
+.loading-state {
+  min-height: 144px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: #7a6a5a;
+  border: 1px solid #ebdcd3;
+  border-radius: 18px;
+  background: linear-gradient(110deg, #fcf9f5 30%, #f5ede2 45%, #fcf9f5 60%);
+  background-size: 200% 100%;
+  animation: troo-shimmer 1.4s linear infinite;
+}
+
+.loading-spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid #ebdcd3;
+  border-top-color: #9a4a3a;
+  border-radius: 50%;
+  animation: troo-spin 0.7s linear infinite;
+}
+
+@keyframes troo-spin { to { transform: rotate(360deg); } }
+@keyframes troo-shimmer { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-state, .loading-spinner { animation: none; }
 }
 
 .map-preview svg {
@@ -913,6 +973,17 @@ p {
   font-weight: 800;
   padding: 7px 14px;
   font-size: 13px;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.wallet-qr {
+  background: #f5ede2 !important;
+  color: #9a4a3a !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Troo Cyprus Dining — Core User Journeys', () => {
+  test('dialogs return focus to their opener after closing', async ({ page }) => {
+    await page.goto('/discover');
+    const opener = page.getByRole('button', { name: 'Book a table' }).first();
+    await opener.focus();
+    await opener.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+  });
+
   test('booking dialog opens and closes with Escape, close button, and backdrop', async ({ page }) => {
     await page.goto('/discover');
     const bookBtn = page.getByRole('button', { name: 'Book a table' }).first();

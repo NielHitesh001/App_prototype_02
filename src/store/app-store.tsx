@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { CartItem, MenuItem, TableBooking, Wallet } from '../domain/types';
-import { initialTableBookings, initialWallet } from '../fixtures/data';
+import { api } from '../api';
 import { debit, generateReference, processRefund, processTopupWithBonus } from '../lib/wallet';
 
 type RefundResult = {
@@ -10,6 +10,9 @@ type RefundResult = {
 };
 
 type StoreContextType = {
+  auth: { email: string } | null;
+  signIn: (identifier: string) => void;
+  signOut: () => void;
   wallet: Wallet;
   saved: Set<string>;
   toggleSaved: (id: string) => void;
@@ -61,13 +64,26 @@ function getInitialWallet(): Wallet {
       }
     }
   }
-  return initialWallet;
+  return api.initialWallet();
 }
 
 export function AppStore({ children }: { children: ReactNode }) {
+  const [auth, setAuth] = useState<{ email: string } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const saved = localStorage.getItem('troo_auth_session');
+    if (!saved) return null;
+    try {
+      const value: unknown = JSON.parse(saved);
+      return typeof value === 'object' && value !== null && 'email' in value && typeof value.email === 'string'
+        ? { email: value.email }
+        : null;
+    } catch {
+      return null;
+    }
+  });
   const [wallet, setWallet] = useState<Wallet>(getInitialWallet);
   const [saved, setSaved] = useState<Set<string>>(new Set(['patriko']));
-  const [tableBookings, setTableBookings] = useState<TableBooking[]>(initialTableBookings);
+  const [tableBookings, setTableBookings] = useState<TableBooking[]>(() => [...api.initialBookings()]);
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
@@ -75,6 +91,19 @@ export function AppStore({ children }: { children: ReactNode }) {
       sessionStorage.setItem('troo_wallet_session', JSON.stringify(wallet));
     }
   }, [wallet]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (auth) localStorage.setItem('troo_auth_session', JSON.stringify(auth));
+    else localStorage.removeItem('troo_auth_session');
+  }, [auth]);
+
+  const signIn = (identifier: string) => {
+    const normalized = identifier.trim();
+    if (normalized) setAuth({ email: normalized });
+  };
+
+  const signOut = () => setAuth(null);
 
   // Keep window helper for automated QA / debugging
   useEffect(() => {
@@ -111,7 +140,7 @@ export function AppStore({ children }: { children: ReactNode }) {
         ]
       });
     } else {
-      setWallet(initialWallet);
+      setWallet(api.initialWallet());
     }
   };
 
@@ -183,11 +212,8 @@ export function AppStore({ children }: { children: ReactNode }) {
   };
 
   const addTableBooking = (booking: Omit<TableBooking, 'id' | 'status'>) => {
-    const newBooking: TableBooking = {
-      ...booking,
-      id: `tb-${Date.now()}`,
-      status: 'confirmed'
-    };
+    // TODO(api): await api.createBooking once the HTTP adapter is enabled.
+    const newBooking = api.createBooking(booking);
     setTableBookings(prev => [newBooking, ...prev]);
   };
 
@@ -232,6 +258,18 @@ export function AppStore({ children }: { children: ReactNode }) {
       }
       addDebit(totalCents, `Kouzina delivery order (${cart.length} items)`);
     }
+    // TODO(api): persist and reconcile this order with the HTTP adapter before clearing the cart.
+    api.createOrder({
+      lines: cart.map(({ item, quantity }) => ({
+        menuItemId: item.id,
+        quantity,
+        unitPriceCents: item.priceCents
+      })),
+      subtotalCents,
+      deliveryFeeCents,
+      totalCents,
+      paymentMethod: method
+    });
     clearCart();
     return { success: true };
   };
@@ -239,6 +277,9 @@ export function AppStore({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider
       value={{
+        auth,
+        signIn,
+        signOut,
         wallet,
         saved,
         toggleSaved,

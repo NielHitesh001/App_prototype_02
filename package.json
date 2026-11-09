@@ -5,23 +5,29 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "api": "tsx server/src/index.ts",
+    "api:dev": "tsx watch server/src/index.ts",
     "build": "tsc -b && vite build",
     "check:pilot": "bash -c 'if grep -rn \"PLACEHOLDER\" src/; then echo \"Pilot build blocked: customer-facing PLACEHOLDER found in src/\" >&2; exit 1; fi'",
     "build:pilot": "npm run check:pilot && npm run build",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test e2e/accessibility.spec.ts"
+    "test:a11y": "playwright test e2e/accessibility.spec.ts",
+    "test:api": "vitest run server/src/app.test.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NielHitesh001/App_prototype_02.git"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
     "lucide-react": "^1.69.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.5"
+    "react-router-dom": "^7.18.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
@@ -31,14 +37,19 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/supertest": "^7.2.1",
     "@vitejs/plugin-react": "^6.2.1",
     "axe-core": "^4.14.0",
     "eslint": "^10.14.0",
     "jsdom": "^31.0.0",
     "playwright": "^1.64.1",
+    "supertest": "^7.3.2",
     "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.6",

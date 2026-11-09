@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title desc">
+  <title id="title">Coffee and meze</title><desc id="desc">A stylised table with coffee and small sharing plates.</desc>
+  <rect width="640" height="480" fill="#E6D2B4"/><path d="M0 92h640v296H0z" fill="#B66A45"/><circle cx="320" cy="240" r="156" fill="#FFFDF9"/><circle cx="320" cy="240" r="110" fill="#F3D9A0"/><circle cx="320" cy="240" r="42" fill="#4F5B45"/><circle cx="200" cy="185" r="34" fill="#9A4A3A"/><circle cx="440" cy="300" r="38" fill="#9A4A3A"/>
+</svg>

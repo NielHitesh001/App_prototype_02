@@ -1,10 +1,7 @@
 import type { Deal, Event, MenuItem, TableBooking, Venue, Wallet } from '../domain/types';
 
 // Development-only mock data. Label clearly as development preview in the UI.
-const photo = (id: string, alt: string) => ({
-  src: `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`,
-  alt
-});
+const photo = (name: string, alt: string) => ({ src: `/images/${name}.svg`, alt });
 
 export const venues: Venue[] = [
   {
@@ -18,7 +15,7 @@ export const venues: Venue[] = [
     ratingCount: 126,
     phone: '+357 25 341200',
     description: 'Slow-cooked earthenware hearth dining in the stone heart of Limassol.',
-    image: photo('photo-1515003197210-e0cd71810b5f', 'A warmly lit dining table by the stone hearth at To Patriko Taverna')
+    image: photo('patriko', 'A warmly lit dining table by the stone hearth at To Patriko Taverna')
   },
   {
     id: 'dionysus',
@@ -31,7 +28,7 @@ export const venues: Venue[] = [
     ratingCount: 74,
     phone: '+357 25 723490',
     description: 'Natural commandaria vintages, cured lountza, and barrel-aged village cheeses.',
-    image: photo('photo-1414235077428-338989a2e8c0', 'Restaurant table prepared for dinner with wine glasses')
+    image: photo('dionysus', 'Restaurant table prepared for dinner with wine glasses')
   },
   {
     id: 'kafeneio',
@@ -42,7 +39,7 @@ export const venues: Venue[] = [
     fireplace: false,
     phone: '+357 25 365820',
     description: 'Unrushed morning coffee, wild mountain greens, and quiet afternoon tables.',
-    image: photo('photo-1513104890138-7c749659a591', 'Sharing plates and fresh pita on a rustic wooden table')
+    image: photo('kafeneio', 'Sharing plates and fresh pita on a rustic wooden table')
   },
   {
     id: 'troodos',
@@ -53,7 +50,7 @@ export const venues: Venue[] = [
     fireplace: true,
     phone: '+357 25 813044',
     description: 'Clay-oven sourdough loaves, warm trahanas soup, and slow mountain braises.',
-    image: photo('photo-1547592180-85f173990554', 'Warm earthen bowl of seasonal village stew')
+    image: photo('troodos', 'Warm earthen bowl of seasonal village stew')
   }
 ];
 
@@ -88,7 +85,7 @@ export const events: Event[] = [
     seatsLeft: 8,
     verified: false,
     description: 'Four vintage barrel tastings paired with 8-hour parchment-wrapped clay oven lamb.',
-    image: photo('photo-1544025162-d76694265947', 'Traditional clay oven braised lamb served with village wine')
+    image: photo('patriko', 'Traditional clay oven braised lamb served with village wine')
   },
   {
     id: 'e2',
@@ -101,7 +98,7 @@ export const events: Event[] = [
     seatsLeft: 3,
     verified: false,
     description: 'Hands-on morning woodfire bake, hand-pinched sourdough and fresh mint goat halloumi.',
-    image: photo('photo-1509440159596-0249088772ff', 'Freshly baked artisanal bread near a wood-fired hearth')
+    image: photo('dionysus', 'Freshly baked artisanal bread near a wood-fired hearth')
   },
   {
     id: 'e3',
@@ -114,7 +111,7 @@ export const events: Event[] = [
     seatsLeft: 12,
     verified: false,
     description: 'Free community tasting of low-intervention Cypriot wines and house-cured meats.',
-    image: photo('photo-1510812431401-41d2bd2722f3', 'Glass of amber wine next to cured meats on marble counter')
+    image: photo('kafeneio', 'Glass of amber wine next to cured meats on marble counter')
   },
   {
     id: 'e4',
@@ -127,7 +124,7 @@ export const events: Event[] = [
     seatsLeft: 5,
     verified: true,
     description: 'Rare commandaria vintages paired with four artisan bites.',
-    image: photo('photo-1510812431401-41d2bd2722f3', 'Cellar wine tasting with oak barrels')
+    image: photo('dionysus', 'Cellar wine tasting with oak barrels')
   }
 ];
 
@@ -144,7 +141,7 @@ export const menuItems: MenuItem[] = [
     deliveryFeeCents: 250,
     minOrderEur: 15.0,
     minOrderCents: 1500,
-    image: photo('photo-1544025162-d76694265947', 'Clay pot kleftiko lamb with wild herbs')
+    image: photo('patriko', 'Clay pot kleftiko lamb with wild herbs')
   },
   {
     id: 'm2',
@@ -158,7 +155,7 @@ export const menuItems: MenuItem[] = [
     deliveryFeeCents: 200,
     minOrderEur: 12.0,
     minOrderCents: 1200,
-    image: photo('photo-1565299624946-b28f40a0ae38', 'Grilled halloumi with honey and warm sourdough')
+    image: photo('dionysus', 'Grilled halloumi with honey and warm sourdough')
   },
   {
     id: 'm3',
@@ -172,7 +169,7 @@ export const menuItems: MenuItem[] = [
     deliveryFeeCents: 250,
     minOrderEur: 20.0,
     minOrderCents: 2000,
-    image: photo('photo-1541544741938-0af808871cc0', 'Full Mediterranean meze spread')
+    image: photo('kafeneio', 'Full Mediterranean meze spread')
   },
   {
     id: 'm4',
@@ -186,7 +183,7 @@ export const menuItems: MenuItem[] = [
     deliveryFeeCents: 250,
     minOrderEur: 15.0,
     minOrderCents: 1500,
-    image: photo('photo-1555939594-58d7cb561ad1', 'Charcoal grilled pork souvla platter')
+    image: photo('troodos', 'Charcoal grilled pork souvla platter')
   }
 ];
 
