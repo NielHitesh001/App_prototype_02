@@ -36,7 +36,29 @@ npm run test:e2e
 
 # Run automated accessibility checks (axe-core)
 npm run test:a11y
+
+# Start the local API in a second terminal
+npm run api
+
+# Run server contract tests
+npm run test:api
 ```
+
+### Local backend
+
+`npm run api` starts a persistent local REST API at `http://localhost:8787`. It seeds once from clearly marked fixture data, then writes development state to `server/data/troo.json` (ignored by Git). It validates every write, uses integer cents for money, makes top-ups idempotent, and rejects wallet overspend.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | Service health check |
+| `GET` | `/v1/catalog`, `/v1/venues`, `/v1/events` | Public catalog |
+| `GET` | `/v1/wallet`, `/v1/bookings` | Wallet and bookings |
+| `POST` | `/v1/wallet/top-ups` | Wallet top-up stub; send `Idempotency-Key` |
+| `POST` | `/v1/bookings` | Reservation confirmation and optional wallet debit |
+| `POST` | `/v1/orders` | Server-validated Kouzina order |
+| `POST` | `/v1/partner-leads` | Partner signup collection |
+
+The backend intentionally does not process real payments or authentication yet. A payment provider, webhook verification, database migration, and identity layer are required before production handling of money or personal data.
 
 ---
 

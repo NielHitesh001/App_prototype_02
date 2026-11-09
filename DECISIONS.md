@@ -4,7 +4,7 @@ These product decisions were confirmed by the Product Owner and govern the imple
 
 1. **Brand Name:** **Troo**
    - Applied consistently across the app: logo lockup, headers, navigation, pass card, and editorial copy.
-   - Replaces conflicting references like "Kalihora" or "Kouzina" as top-level brand names (Kouzina remains strictly the name of the delivery destination under `/kouzina`).
+   - Replaces conflicting references like "Troo" or "Kouzina" as top-level brand names (Kouzina remains strictly the name of the delivery destination under `/kouzina`).
 
 2. **Visual Palette:** **Terracotta & Cream (Stitch System)**
    - Primary: `#9A4A3A` (Warm Terracotta / Fired Clay)
